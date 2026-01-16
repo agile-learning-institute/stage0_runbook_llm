@@ -1,260 +1,168 @@
 # stage0_runbook_ai_cli
 
-A container-friendly, non-interactive CLI that executes tightly scoped LLM-powered code transformations against a mounted source repository.
+Container-friendly CLI that executes LLM-powered code transformations against a mounted repository. Produces deterministic patches and commit messages for automated workflows.
 
-The executor is designed to run as a pure change proposer in automated workflows:
-- it reads a repository
-- applies project- and org-specific standards
-- produces a deterministic set of changes (as a patch or structured edit plan)
-- emits a commit message
-- and exits
-
-All git operations, validation, branching, and commits are handled by the caller, not by this tool.
-
----
-
-## Design Goals
-- Deterministic + auditable
-    The executor proposes changes; it does not manage git state.
-- Container-first
-    Intended to run via docker run with a repo mounted at a known path.
-- LLM-backend agnostic
-    Uses a provider interface. Ollama is supported for local/dev, but not required.
-- Low-volume, high-trust
-    Optimized for CI utilities, repo bootstrapping, and controlled automation.
-- Strong guardrails
-    Explicit task definitions, path allowlists, output contracts, and no hidden side effects.
-
----
-
-## High-Level Architecture
+## Architecture
 
 ```
-┌────────────────────────────┐
-│ Caller Script / CI Job     │
-│                            │
-│ - creates branch           │
-│ - mounts repo              │
-│ - injects context (env)    │
-│ - runs executor            │
-│ - applies patch            │
-│ - runs tests / lint        │
-│ - commits & pushes         │
-└─────────────▲──────────────┘
-              │ stdout
-┌─────────────┴──────────────┐
-│ LLM Executor CLI            │
-│                             
-│ - reads repo files          │
-│ - loads standards           │
-│ - runs LLM task             │
-│ - outputs patch + message   │
-│ - exits                     │
-└─────────────▲──────────────┘
-              │
-┌─────────────┴──────────────┐
-│ LLM Provider Interface     │
-│  (Ollama, OpenAI, etc.)    │
-└────────────────────────────┘
+Caller → [Mounts repo + context] → Executor → [stdout: patch + message] → Caller
 ```
 
----
+The executor is a pure function: reads inputs, executes one task, writes patch output, exits. Git operations are handled by the caller.
 
-## Responsibilities (Explicit Non-Goals)
+## Usage
 
-### The executor 
+### Container
 
-### DOES
-- Read files from the mounted repository
-- Read context from the mounted specifications repository
-    - Organizational information
-    - System standards
-    - Prompt guides for specific tasks
-- Execute a single, well-defined task
-- Produce:
-    - a commit message
-    - a patch for the mounted repository
-- Exit with a meaningful status code
+```bash
+docker run --rm \
+  -v /path/to/repo:/workspace/repo \
+  -v /path/to/context:/workspace/context \
+  -e LLM_PROVIDER=ollama \
+  -e LLM_MODEL=codellama \
+  -e LLM_BASE_URL=http://localhost:11434 \
+  -e TRACKING_BREADCRUMB="user:admin,role:ci,ts:2024-01-01T00:00:00Z,corr:abc123" \
+  ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest \
+  --task example
+```
 
-### The executor 
+### Local Development
 
-### DOES NOT
-- Run git commit, git push, or manage branches
-- Install dependencies in the target repo
-- Loop indefinitely or self-heal without bounds
+```bash
+pipenv install
+export LLM_PROVIDER=ollama
+export LLM_MODEL=codellama
+export LLM_BASE_URL=http://localhost:11434
+export REPO_ROOT=/path/to/repo
+export CONTEXT_ROOT=/path/to/context
+export TRACKING_BREADCRUMB="user:dev,role:dev,ts:$(date -u +%Y-%m-%dT%H:%M:%SZ),corr:test"
 
----
+pipenv run task --task example
+```
 
-## Execution Model
-The executor is invoked once per task.
-
-Each invocation:
-1. Loads configuration and standards
-2. Loads repo context
-3. Executes a single task (e.g. “generate OpenAPI spec”)
-4. Emits results to stdout
-5. Exits
-
-No interactive prompts. No background state.
-
----
-
-### Patch-based output
+### Output Format
 
 ```
 ---COMMIT_MSG---
-feat(api): generate OpenAPI specification from JSON schemas
+feat(api): generate OpenAPI specification
 
 - Adds openapi.yaml using org-standard conventions
 - Includes pagination, error envelope, and auth scheme
 ---PATCH---
 diff --git a/openapi.yaml b/openapi.yaml
+new file mode 100644
 index 0000000..abc1234
 --- /dev/null
 +++ b/openapi.yaml
-@@ ...
+@@ -0,0 +1,10 @@
++openapi: 3.1.0
++...
 ```
 
-Rules:
-- Exactly one commit message block
-- Exactly one patch block
-- Patch must apply cleanly from repo root
-- No extra text outside the blocks
+## Configuration
 
-## Repository Mount Convention
-The target repository must be mounted at:
-```
-/workspace/repo
-```
-The executor treats /workspace/repo as the repo root.
+### Environment Variables
 
-Context Mount of the Umbrella Repo with Specifications
-```
-/workspace/context   # standards, specs, schemas
-```
-Includes architecture specifications, software standards, Dated dictionaries, Schemas and more
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `TRACKING_BREADCRUMB` | Yes | - | User, role, timestamp, correlation ID |
+| `REPO_ROOT` | No | `/workspace/repo` | Repository mount point |
+| `CONTEXT_ROOT` | No | `/workspace/context` | Context/specifications mount point |
+| `LLM_PROVIDER` | No | `null` | `null`, `ollama`, `openai`, `azure` |
+| `LLM_MODEL` | No | `codellama` | Provider-specific model name |
+| `LLM_BASE_URL` | Conditional | - | Required for self-hosted providers |
+| `LLM_API_KEY` | Conditional | - | Required for `openai`/`azure` |
+| `LOG_LEVEL` | No | `INFO` | Logging level |
 
-## Configuration via Environment Variables
+### Task Definitions
 
-The executor is configured entirely via env vars.
+Tasks are markdown files with YAML frontmatter in `{CONTEXT_ROOT}/tasks/{name}.md`:
 
-### Required
-|Variable|Description|
-|---|---|
-|TRACKING_BREADCRUMB|Identifier that includes user, roles, date-time, correlation_id|
-|REPO_ROOT|Defaults to /workspace/repo|
-|CONTEXT_ROOT|Defaults to /workspace/context|
-
-### LLM Provider Selection
-|Variable|Description|
-|---|---|
-|LLM_PROVIDER|ollama, openai, azure, etc.|
-|LLM_MODEL|Provider-specific model name|
-|LLM_BASE_URL|Required for self-hosted providers|
-|LLM_API_KEY|Optional depending on provider|
-
+```yaml
 ---
-
-## LLM Provider Interface
-The executor defines a provider abstraction, not a hard dependency.
-```
-class LLMClient(Protocol):
-    def complete(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        temperature: float,
-        max_tokens: int
-    ) -> str:
-        ...
-```
-
-### Supported (initial)
-- Ollama (dev / local)
-- Null / Dry-run (for testing)
-- Additional providers added via adapters
-
-No provider-specific logic leaks into task code.
-
----
-
-## Task Model
-Each task is a single-purpose markdown file with a yaml block that describes the task.
-Tasks are loaded from context repo in /tasks.
-
-Example:
-```
-prompt: generate an OpenAPI based API explorer for the {SERVICE} domain
+prompt: Generate an OpenAPI spec for {SERVICE}
 context:
-- /mounts/specifications/README.md for system context
-- /mounts/specifications/api_standards.md for API Standards
-- /mounts/specifications/.schemas for data schemas
-- /mounts/specifications/architecture.yaml for the {SERVICE} domain context
+  - /specs/api_standards.md
+  - /schemas/{SERVICE}.yaml
 outputs:
-- /mounts/repo/docs/index.html 
-- /mounts/repo/docs/openapi.yaml
+  - /docs/openapi.yaml
 guarantees:
-- OpenAPI 3.1
-- Standard error envelope
-- Pagination conventions
-- No undocumented endpoints
-```
-
-A task:
-- defines required inputs
-- loads relevant repo files
-- assembles the LLM prompt
-- validates the response
-- produces the final output
-
+  - OpenAPI 3.1
+  - Standard error envelope
 ---
 
-## Security & Isolation Expectations
-
-The executor is designed to run with:
-- --network=none (unless explicitly required)
-- non-root user
-- no git credentials
-- limited CPU/memory
-- no access outside mounted volumes
-
-The executor assumes the caller enforces container hardening.
-
----
-
-## Development Setup
-```
-pipenv install --dev
-pipenv shell
-pipenv run task - execute a specified task
-pipenv run test - execute unit tests
-pipenv run e2e - run black-box E2E cli test
-pipenv run container - build container
-pipenv run deploy - execute container script
-pipenv run help 
+Task-specific instructions with {VARIABLE} substitution.
 ```
 
-### Local dev with Ollama
+**Fields:**
+- `prompt`: High-level task description
+- `context`: Files/patterns to load from context root
+- `outputs`: Expected output files (informational)
+- `guarantees`: Requirements/constraints for LLM
+- Body: Detailed instructions with variable substitution
+
+## LLM Providers
+
+### Null (Testing)
+```bash
+export LLM_PROVIDER=null
 ```
+Returns mock patch output for testing.
+
+### Ollama (Local)
+```bash
 export LLM_PROVIDER=ollama
 export LLM_MODEL=codellama
 export LLM_BASE_URL=http://localhost:11434
 ```
 
----
+### OpenAI / Azure
+```bash
+export LLM_PROVIDER=openai
+export LLM_MODEL=gpt-4
+export LLM_BASE_URL=https://api.openai.com/v1
+export LLM_API_KEY=sk-...
+```
 
-## Versioning & Stability
-- Output format is a public contract
-- Breaking changes require a major version bump
-- Tasks are versioned independently where possible
+Provider interface is extensible via `LLMClient` protocol in `src/llm_provider.py`.
 
----
+## Development
 
-## Summary
-This executor is intentionally boring:
-- one task
-- one run
-- one patch
-- one commit message
+```bash
+pipenv install --dev
+pipenv run test          # Run unit tests
+pipenv run task --task example  # Run locally
+pipenv run container     # Build Docker image
+pipenv run deploy        # Test container locally
+```
 
-That constraint is what makes it safe, auditable, and easy to integrate into deterministic repo automation pipelines.
+### Project Structure
+
+```
+src/
+├── main.py              # CLI entry point
+├── executor.py          # Task orchestration
+├── llm_provider.py      # LLM abstraction & adapters
+├── task_loader.py       # Task definition loader
+├── repo_reader.py       # Repository file access
+└── patch_generator.py   # Patch output generation
+```
+
+## Design Principles
+
+- **Deterministic**: One task, one run, one patch
+- **Container-first**: Designed for `docker run` with mounted volumes
+- **Provider-agnostic**: LLM backend via protocol interface
+- **Non-interactive**: All configuration via env vars and arguments
+- **Auditable**: Explicit task definitions, path allowlists, output contracts
+
+## Security
+
+Designed to run with:
+- `--network=none` (unless LLM provider requires network)
+- Non-root user
+- No git credentials
+- Limited CPU/memory
+- Access only to mounted volumes
+
+Container hardening is the caller's responsibility.
