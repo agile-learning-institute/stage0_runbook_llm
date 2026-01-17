@@ -42,12 +42,15 @@ class Executor:
         user_prompt = self._build_user_prompt(task, task_variables)
 
         # Execute LLM call
+        from .config import Config
+        config = Config.get_instance()
+        
         logger.info("Executing LLM task...")
         response = self.llm_client.complete(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            temperature=0.7,
-            max_tokens=8192
+            temperature=config.get_llm_temperature(),
+            max_tokens=config.LLM_MAX_TOKENS
         )
 
         # Parse response into commit message and patch
@@ -61,8 +64,8 @@ class Executor:
         prompt_parts = []
 
         # Add task description
-        if "prompt" in task:
-            prompt_parts.append(f"Task: {task['prompt']}")
+        if "description" in task:
+            prompt_parts.append(f"Task: {task['description']}")
         
         # Add guarantees/requirements
         if "guarantees" in task:

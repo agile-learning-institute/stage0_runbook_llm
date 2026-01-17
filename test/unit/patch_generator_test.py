@@ -2,7 +2,9 @@
 import unittest
 import tempfile
 import os
-from .patch_generator import parse_patch_response, PatchGenerator
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+from patch_generator import parse_patch_response, PatchGenerator
 
 
 class TestParsePatchResponse(unittest.TestCase):

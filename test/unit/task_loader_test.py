@@ -2,8 +2,10 @@
 import unittest
 import tempfile
 import os
+import sys
 import yaml
-from .task_loader import TaskLoader
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+from task_loader import TaskLoader
 
 
 class TestTaskLoader(unittest.TestCase):

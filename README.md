@@ -1,4 +1,4 @@
-# stage0_runbook_ai_cli
+# stage0_runbook_llm
 
 Container-friendly CLI that executes LLM-powered code transformations against a mounted repository. Produces deterministic patches and commit messages for automated workflows.
 
@@ -61,26 +61,21 @@ index 0000000..abc1234
 
 ## Configuration
 
-### Environment Variables
+Configuration is managed by the `Config` class in `src/config.py`. See that file for:
+- All available configuration options
+- Default values
+- Environment variable names
+- Configuration priority system
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `TRACKING_BREADCRUMB` | Yes | - | User, role, timestamp, correlation ID |
-| `REPO_ROOT` | No | `/workspace/repo` | Repository mount point |
-| `CONTEXT_ROOT` | No | `/workspace/context` | Context/specifications mount point |
-| `LLM_PROVIDER` | No | `null` | `null`, `ollama`, `openai`, `azure` |
-| `LLM_MODEL` | No | `codellama` | Provider-specific model name |
-| `LLM_BASE_URL` | Conditional | - | Required for self-hosted providers |
-| `LLM_API_KEY` | Conditional | - | Required for `openai`/`azure` |
-| `LOG_LEVEL` | No | `INFO` | Logging level |
+The Config class follows a singleton pattern and automatically configures logging based on `LOG_LEVEL`.
 
-### Task Definitions
+## Task Definitions
 
 Tasks are markdown files with YAML frontmatter in `{CONTEXT_ROOT}/tasks/{name}.md`:
 
 ```yaml
 ---
-prompt: Generate an OpenAPI spec for {SERVICE}
+description: Generate an OpenAPI spec for {SERVICE}
 context:
   - /specs/api_standards.md
   - /schemas/{SERVICE}.yaml
@@ -95,11 +90,17 @@ Task-specific instructions with {VARIABLE} substitution.
 ```
 
 **Fields:**
-- `prompt`: High-level task description
+- `description`: High-level task description
 - `context`: Files/patterns to load from context root
 - `outputs`: Expected output files (informational)
 - `guarantees`: Requirements/constraints for LLM
 - Body: Detailed instructions with variable substitution
+
+### Example Tasks
+
+See `test/context/tasks/` for example task definitions:
+- `example.md` - Example task for generating a README
+- `simple_readme.md` - Simple README generation task for testing
 
 ## LLM Providers
 
@@ -131,6 +132,7 @@ Provider interface is extensible via `LLMClient` protocol in `src/llm_provider.p
 ```bash
 pipenv install --dev
 pipenv run test          # Run unit tests
+pipenv run e2e          # Run end-to-end tests
 pipenv run task --task example  # Run locally
 pipenv run container     # Build Docker image
 pipenv run deploy        # Test container locally
@@ -140,12 +142,21 @@ pipenv run deploy        # Test container locally
 
 ```
 src/
-├── main.py              # CLI entry point
-├── executor.py          # Task orchestration
-├── llm_provider.py      # LLM abstraction & adapters
-├── task_loader.py       # Task definition loader
-├── repo_reader.py       # Repository file access
-└── patch_generator.py   # Patch output generation
+├── command.py          # CLI entry point
+├── config.py           # Configuration management
+├── executor.py         # Task orchestration
+├── llm_provider.py     # LLM abstraction & adapters
+├── task_loader.py      # Task definition loader
+├── repo_reader.py      # Repository file access
+└── patch_generator.py  # Patch output generation
+
+test/
+├── unit/               # Unit tests
+├── e2e/                # End-to-end tests
+├── context/            # Test context files
+│   └── tasks/          # Example task definitions
+├── repo/               # Test repository
+└── expected/           # Expected test outputs
 ```
 
 ## Design Principles

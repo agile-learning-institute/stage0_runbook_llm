@@ -20,5 +20,5 @@ COPY src/ /opt/stage0/executor/
 ENV PYTHONPATH=/opt/stage0/executor
 
 # Command to run the application
-ENTRYPOINT ["python", "-m", "main"]
+ENTRYPOINT ["python", "-m", "command"]
 CMD ["--help"]

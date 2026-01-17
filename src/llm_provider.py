@@ -123,17 +123,21 @@ class OpenAIClient:
 
 
 def create_llm_client() -> LLMClient:
-    """Factory function to create an LLM client based on environment variables."""
-    provider = os.getenv("LLM_PROVIDER", "null").lower()
-    model = os.getenv("LLM_MODEL", "codellama")
-    base_url = os.getenv("LLM_BASE_URL", "")
-    api_key = os.getenv("LLM_API_KEY")
+    """Factory function to create an LLM client based on configuration."""
+    from .config import Config
+    config = Config.get_instance()
+    
+    provider = config.LLM_PROVIDER.lower()
+    model = config.LLM_MODEL
+    base_url = config.LLM_BASE_URL
+    api_key = config.LLM_API_KEY
 
     if provider == "null":
         logger.info("Using NullLLMClient (dry-run mode)")
         return NullLLMClient()
     elif provider == "ollama":
-        base_url = base_url or "http://localhost:11434"
+        if not base_url:
+            base_url = "http://localhost:11434"
         logger.info(f"Using OllamaClient with model {model} at {base_url}")
         return OllamaClient(model, base_url)
     elif provider in ["openai", "azure"]:

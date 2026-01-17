@@ -4,9 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [scripts]
-test = "sh -c 'PYTHONPATH=./src python -m unittest discover -s src -p '*_test.py' -v'"
-task = "sh -c 'PYTHONPATH=./src python -m main'"
-e2e = "sh -c 'PYTHONPATH=./src python -m main_test'"
+test = "sh -c 'PYTHONPATH=./src python -m unittest discover -s test -p '*_test.py' -v'"
+task = "sh -c 'PYTHONPATH=./src python -m command'"
+e2e = "sh -c 'PYTHONPATH=./src python -m unittest discover -s test/e2e -p '*.py' -v'"
 container = "docker build --tag ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest ."
 deploy = "sh -c 'docker run --rm -v $(pwd)/test/repo:/workspace/repo -v $(pwd)/test/context:/workspace/context ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest'"
 help = "sh -c 'echo \"Available commands: test, task, e2e, container, deploy\"'"

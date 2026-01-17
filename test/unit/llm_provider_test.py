@@ -1,8 +1,10 @@
 """Tests for LLM provider implementations."""
 import unittest
 import os
+import sys
 from unittest.mock import patch, Mock
-from .llm_provider import NullLLMClient, OllamaClient, OpenAIClient, create_llm_client
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+from llm_provider import NullLLMClient, OllamaClient, OpenAIClient, create_llm_client
 
 
 class TestNullLLMClient(unittest.TestCase):

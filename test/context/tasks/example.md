@@ -1,5 +1,5 @@
 ---
-prompt: Generate a README file for the {SERVICE} service
+description: Generate a README file for the {SERVICE} service
 context:
   - /README.md
   - /standards/doc_standards.md
