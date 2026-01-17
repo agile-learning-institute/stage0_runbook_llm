@@ -39,8 +39,7 @@ class TestE2E(unittest.TestCase):
         os.environ["TRACKING_BREADCRUMB"] = "user:test,role:test,ts:2024-01-01T00:00:00Z,corr:test123"
         
         try:
-            executor = Executor(self.repo_root, self.context_root)
-            commit_message, patch = executor.execute_task("simple_readme")
+            commit_message, patch = Executor.execute_task(self.repo_root, self.context_root, "simple_readme")
             
             # Verify output format - commit_message and patch are already parsed
             self.assertIn("README.md", patch)

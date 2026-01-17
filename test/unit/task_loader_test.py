@@ -15,7 +15,6 @@ class TestTaskLoader(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.tasks_dir = os.path.join(self.temp_dir, "tasks")
         os.makedirs(self.tasks_dir)
-        self.loader = TaskLoader(self.temp_dir)
 
     def tearDown(self):
         import shutil
@@ -38,7 +37,7 @@ Task instructions go here.
         with open(task_file, "w") as f:
             f.write(task_content)
 
-        task = self.loader.load_task("test")
+        task = TaskLoader.load_task(self.temp_dir, "test")
         self.assertEqual(task["description"], "Generate an API spec")
         self.assertIn("context", task)
         self.assertEqual(task["content"], "Task instructions go here.")
@@ -46,7 +45,7 @@ Task instructions go here.
     def test_load_task_not_found(self):
         """Test loading a non-existent task raises FileNotFoundError."""
         with self.assertRaises(FileNotFoundError):
-            self.loader.load_task("nonexistent")
+            TaskLoader.load_task(self.temp_dir, "nonexistent")
 
     def test_load_task_missing_frontmatter(self):
         """Test that task without frontmatter raises ValueError."""
@@ -55,7 +54,7 @@ Task instructions go here.
             f.write("No frontmatter here")
 
         with self.assertRaises(ValueError):
-            self.loader.load_task("invalid")
+            TaskLoader.load_task(self.temp_dir, "invalid")
 
     def test_load_context_files(self):
         """Test loading context files."""
@@ -66,7 +65,7 @@ Task instructions go here.
         with open(test_file, "w") as f:
             f.write("# API Standards\n\nTest content")
 
-        context_files = self.loader.load_context_files(["specs/api_standards.md"])
+        context_files = TaskLoader.load_context_files(self.temp_dir, ["specs/api_standards.md"])
         self.assertIn("specs/api_standards.md", context_files)
         self.assertIn("API Standards", context_files["specs/api_standards.md"])
 

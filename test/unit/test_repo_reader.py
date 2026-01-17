@@ -21,11 +21,6 @@ class TestRepoReader(unittest.TestCase):
         """Clean up after tests."""
         shutil.rmtree(self.temp_dir)
 
-    def test_repo_reader_initialization(self):
-        """Test RepoReader initialization."""
-        reader = RepoReader(self.repo_dir)
-        self.assertEqual(reader.repo_root, self.repo_dir)
-
     def test_read_file(self):
         """Test reading a file from repository."""
         # Create a test file
@@ -34,8 +29,7 @@ class TestRepoReader(unittest.TestCase):
         with open(test_file, "w") as f:
             f.write(test_content)
         
-        reader = RepoReader(self.repo_dir)
-        content = reader.read_file("test.txt")
+        content = RepoReader.read_file(self.repo_dir, "test.txt")
         
         self.assertEqual(content, test_content)
 
@@ -46,8 +40,7 @@ class TestRepoReader(unittest.TestCase):
         with open(test_file, "w") as f:
             f.write(test_content)
         
-        reader = RepoReader(self.repo_dir)
-        content = reader.read_file("/test.txt")
+        content = RepoReader.read_file(self.repo_dir, "/test.txt")
         
         self.assertEqual(content, test_content)
 
@@ -60,17 +53,14 @@ class TestRepoReader(unittest.TestCase):
         with open(test_file, "w") as f:
             f.write(test_content)
         
-        reader = RepoReader(self.repo_dir)
-        content = reader.read_file("subdir/nested.txt")
+        content = RepoReader.read_file(self.repo_dir, "subdir/nested.txt")
         
         self.assertEqual(content, test_content)
 
     def test_read_file_not_found(self):
         """Test reading non-existent file raises FileNotFoundError."""
-        reader = RepoReader(self.repo_dir)
-        
         with self.assertRaises(FileNotFoundError):
-            reader.read_file("nonexistent.txt")
+            RepoReader.read_file(self.repo_dir, "nonexistent.txt")
 
     def test_list_files(self):
         """Test listing files in repository."""
@@ -81,8 +71,7 @@ class TestRepoReader(unittest.TestCase):
             with open(filepath, "w") as f:
                 f.write("content")
         
-        reader = RepoReader(self.repo_dir)
-        listed_files = reader.list_files()
+        listed_files = RepoReader.list_files(self.repo_dir)
         
         self.assertEqual(len(listed_files), len(files))
         for filename in files:
@@ -97,8 +86,7 @@ class TestRepoReader(unittest.TestCase):
             with open(filepath, "w") as f:
                 f.write("content")
         
-        reader = RepoReader(self.repo_dir)
-        txt_files = reader.list_files(pattern=".txt")
+        txt_files = RepoReader.list_files(self.repo_dir, pattern=".txt")
         
         self.assertEqual(len(txt_files), 2)
         self.assertIn("file1.txt", txt_files)
@@ -118,16 +106,14 @@ class TestRepoReader(unittest.TestCase):
         with open(sub_file, "w") as f:
             f.write("sub")
         
-        reader = RepoReader(self.repo_dir)
-        subdir_files = reader.list_files("subdir")
+        subdir_files = RepoReader.list_files(self.repo_dir, "subdir")
         
         self.assertEqual(len(subdir_files), 1)
         self.assertIn("subdir/sub.txt", subdir_files)
 
     def test_list_files_nonexistent_directory(self):
         """Test listing files in non-existent directory returns empty list."""
-        reader = RepoReader(self.repo_dir)
-        files = reader.list_files("nonexistent")
+        files = RepoReader.list_files(self.repo_dir, "nonexistent")
         
         self.assertEqual(files, [])
 
@@ -145,8 +131,7 @@ class TestRepoReader(unittest.TestCase):
         with open(file2, "w") as f:
             f.write("content2")
         
-        reader = RepoReader(self.repo_dir)
-        structure = reader.get_repo_structure()
+        structure = RepoReader.get_repo_structure(self.repo_dir)
         
         self.assertIsInstance(structure, dict)
         self.assertIn("file1.txt", structure)
@@ -159,8 +144,7 @@ class TestRepoReader(unittest.TestCase):
         level2 = os.path.join(level1, "level2")
         os.makedirs(level2)
         
-        reader = RepoReader(self.repo_dir)
-        structure = reader.get_repo_structure(max_depth=1)
+        structure = RepoReader.get_repo_structure(self.repo_dir, max_depth=1)
         
         # Level2 should not be included
         self.assertIn("level1", structure)
@@ -175,8 +159,7 @@ class TestRepoReader(unittest.TestCase):
         with open(normal_file, "w") as f:
             f.write("visible")
         
-        reader = RepoReader(self.repo_dir)
-        structure = reader.get_repo_structure()
+        structure = RepoReader.get_repo_structure(self.repo_dir)
         
         self.assertIn("visible.txt", structure)
         # .hidden should not be in structure

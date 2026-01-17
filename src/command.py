@@ -53,9 +53,8 @@ def main():
         sys.exit(1)
 
     try:
-        # Create executor and run task
-        executor = Executor(repo_root, context_root)
-        commit_message, patch = executor.execute_task(args.task)
+        # Execute task
+        commit_message, patch = Executor.execute_task(repo_root, context_root, args.task)
 
         # Output to stdout in the required format
         print("---COMMIT_MSG---")

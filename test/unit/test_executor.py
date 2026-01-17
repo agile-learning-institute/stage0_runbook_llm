@@ -35,20 +35,26 @@ class TestExecutor(unittest.TestCase):
             if key in os.environ:
                 del os.environ[key]
 
-    def test_executor_initialization(self):
-        """Test executor initialization."""
-        executor = Executor(self.repo_dir, self.context_dir)
-        self.assertEqual(executor.repo_root, self.repo_dir)
-        self.assertEqual(executor.context_root, self.context_dir)
-        self.assertIsNotNone(executor.repo_reader)
-        self.assertIsNotNone(executor.task_loader)
-        self.assertIsNotNone(executor.llm_client)
-
     def test_executor_with_custom_llm_client(self):
         """Test executor with custom LLM client."""
         mock_client = Mock()
-        executor = Executor(self.repo_dir, self.context_dir, llm_client=mock_client)
-        self.assertIs(executor.llm_client, mock_client)
+        # Create a simple task file
+        task_file = os.path.join(self.tasks_dir, "test_task.md")
+        with open(task_file, "w") as f:
+            f.write("""---
+description: Test task
+context: []
+outputs: []
+guarantees: []
+---
+Test content.
+""")
+        # Verify it can accept a custom LLM client
+        commit_message, patch = Executor.execute_task(
+            self.repo_dir, self.context_dir, "test_task", llm_client=mock_client
+        )
+        # Verify mock was called
+        mock_client.complete.assert_called_once()
 
     def test_execute_task_success(self):
         """Test successful task execution."""
@@ -65,8 +71,7 @@ guarantees:
 Test task content.
 """)
         
-        executor = Executor(self.repo_dir, self.context_dir)
-        commit_message, patch = executor.execute_task("test_task")
+        commit_message, patch = Executor.execute_task(self.repo_dir, self.context_dir, "test_task")
         
         self.assertIsInstance(commit_message, str)
         self.assertIsInstance(patch, str)
@@ -93,8 +98,7 @@ guarantees: []
 Test task content.
 """)
         
-        executor = Executor(self.repo_dir, self.context_dir)
-        commit_message, patch = executor.execute_task("test_task")
+        commit_message, patch = Executor.execute_task(self.repo_dir, self.context_dir, "test_task")
         
         self.assertIsInstance(commit_message, str)
         self.assertIsInstance(patch, str)
@@ -113,16 +117,13 @@ guarantees: []
 Task for {SERVICE} service.
 """)
         
-        executor = Executor(self.repo_dir, self.context_dir)
-        commit_message, patch = executor.execute_task("test_task", task_variables={"SERVICE": "api"})
+        commit_message, patch = Executor.execute_task(self.repo_dir, self.context_dir, "test_task", task_variables={"SERVICE": "api"})
         
         self.assertIsInstance(commit_message, str)
         self.assertIsInstance(patch, str)
 
     def test_build_system_prompt(self):
         """Test system prompt building."""
-        executor = Executor(self.repo_dir, self.context_dir)
-        
         task = {
             "description": "Test description",
             "guarantees": ["Guarantee 1", "Guarantee 2"],
@@ -130,7 +131,7 @@ Task for {SERVICE} service.
         }
         context_files = {"file1.md": "Context content"}
         
-        prompt = executor._build_system_prompt(task, context_files)
+        prompt = Executor._build_system_prompt(task, context_files)
         
         self.assertIn("Test description", prompt)
         self.assertIn("Guarantee 1", prompt)
@@ -141,12 +142,10 @@ Task for {SERVICE} service.
 
     def test_build_system_prompt_no_description(self):
         """Test system prompt building without description."""
-        executor = Executor(self.repo_dir, self.context_dir)
-        
         task = {"guarantees": ["Guarantee 1"]}
         context_files = {}
         
-        prompt = executor._build_system_prompt(task, context_files)
+        prompt = Executor._build_system_prompt(task, context_files)
         
         self.assertIn("Guarantee 1", prompt)
         self.assertIn("---COMMIT_MSG---", prompt)
@@ -158,15 +157,13 @@ Task for {SERVICE} service.
         with open(repo_file, "w") as f:
             f.write("Test file content")
         
-        executor = Executor(self.repo_dir, self.context_dir)
-        
         task = {
             "content": "Create file for {SERVICE}",
             "inputs": ["test.txt"]
         }
         variables = {"SERVICE": "api"}
         
-        prompt = executor._build_user_prompt(task, variables)
+        prompt = Executor._build_user_prompt(self.repo_dir, task, variables)
         
         self.assertIn("Create file for api", prompt)
         self.assertIn("Test file content", prompt)
@@ -174,12 +171,10 @@ Task for {SERVICE} service.
 
     def test_build_user_prompt_no_content(self):
         """Test user prompt building without content."""
-        executor = Executor(self.repo_dir, self.context_dir)
-        
         task = {}
         variables = {}
         
-        prompt = executor._build_user_prompt(task, variables)
+        prompt = Executor._build_user_prompt(self.repo_dir, task, variables)
         
         self.assertIn("Repository structure", prompt)
 
@@ -188,8 +183,6 @@ Task for {SERVICE} service.
         # Create a mock client that returns invalid response
         mock_client = Mock()
         mock_client.complete.return_value = "Invalid response without markers"
-        
-        executor = Executor(self.repo_dir, self.context_dir, llm_client=mock_client)
         
         # Create task file
         task_file = os.path.join(self.tasks_dir, "test_task.md")
@@ -204,7 +197,7 @@ Test content.
 """)
         
         with self.assertRaises(ValueError):
-            executor.execute_task("test_task")
+            Executor.execute_task(self.repo_dir, self.context_dir, "test_task", llm_client=mock_client)
 
 
 if __name__ == "__main__":
