@@ -83,6 +83,9 @@ context:
 repo:
   - /src/api/routes.py
   - /examples/
+environment:
+  - SERVICE
+  - API_VERSION
 outputs:
   - /docs/openapi.yaml
 guarantees:
@@ -91,15 +94,17 @@ guarantees:
 ---
 
 Task-specific instructions with {VARIABLE} substitution.
+Variables from environment section will be substituted in the task content.
 ```
 
 **Fields:**
 - `description`: High-level task description
 - `context`: Files/patterns to load from context root (standards, specs, templates)
 - `repo`: Files/patterns to load from repository root (existing code, examples)
+- `environment`: List of required environment variable names (will be validated and used for substitution)
 - `outputs`: Expected output files (informational)
 - `guarantees`: Requirements/constraints for LLM
-- Body: Detailed instructions with variable substitution
+- Body: Detailed instructions with variable substitution (e.g., `{SERVICE}` will be replaced with `$SERVICE` env var value)
 
 Both `context` and `repo` sections support:
 - Individual files: `- /path/to/file.md`

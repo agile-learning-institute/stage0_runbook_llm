@@ -3,6 +3,11 @@ description: Generate a README file for the {SERVICE} service
 context:
   - /README.md
   - /standards/doc_standards.md
+repo:
+  - /src/main.py
+  - /examples/
+environment:
+  - SERVICE
 outputs:
   - /README.md
 guarantees:
@@ -18,3 +23,4 @@ The README should:
 - Provide setup and installation instructions
 - Include usage examples
 - Follow the documentation standards specified in the context
+- Reference patterns from existing code in the repo

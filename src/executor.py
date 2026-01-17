@@ -30,6 +30,17 @@ class Executor:
         task = TaskLoader.load_task(context_root, task_name)
         logger.info(f"Loaded task: {task_name}")
 
+        # Validate and load required environment variables
+        env_vars = Executor._load_environment_variables(task)
+        if env_vars:
+            logger.info(f"Loaded {len(env_vars)} environment variables for task")
+        
+        # Merge environment variables with explicit task_variables (explicit takes precedence)
+        if task_variables:
+            env_vars.update(task_variables)
+        
+        task_variables = env_vars
+
         # Load context and repo files
         context_files = {}
         if "context" in task:
@@ -116,6 +127,47 @@ index 0000000..abc1234
 """)
 
         return "\n".join(prompt_parts)
+
+    @staticmethod
+    def _load_environment_variables(task: Dict[str, Any]) -> Dict[str, str]:
+        """
+        Load and validate required environment variables from task definition.
+        
+        Args:
+            task: Task definition dictionary
+            
+        Returns:
+            Dictionary of environment variable name -> value
+            
+        Raises:
+            ValueError: If a required environment variable is missing
+        """
+        env_vars = {}
+        
+        if "environment" not in task:
+            return env_vars
+        
+        required_vars = task.get("environment", [])
+        missing_vars = []
+        
+        for var_name in required_vars:
+            if not isinstance(var_name, str):
+                logger.warning(f"Invalid environment variable name (not a string): {var_name}")
+                continue
+                
+            value = os.getenv(var_name)
+            if value is None:
+                missing_vars.append(var_name)
+            else:
+                env_vars[var_name] = value
+        
+        if missing_vars:
+            raise ValueError(
+                f"Required environment variables not set: {', '.join(missing_vars)}. "
+                f"Task '{task.get('description', 'unknown')}' requires these variables."
+            )
+        
+        return env_vars
 
     @staticmethod
     def _build_user_prompt(repo_root: str, task: Dict[str, Any], variables: Dict[str, str]) -> str:
