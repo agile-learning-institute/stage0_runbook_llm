@@ -80,6 +80,9 @@ description: Generate an OpenAPI spec for {SERVICE}
 context:
   - /specs/api_standards.md
   - /schemas/{SERVICE}.yaml
+repo:
+  - /src/api/routes.py
+  - /examples/
 outputs:
   - /docs/openapi.yaml
 guarantees:
@@ -92,10 +95,15 @@ Task-specific instructions with {VARIABLE} substitution.
 
 **Fields:**
 - `description`: High-level task description
-- `context`: Files/patterns to load from context root
+- `context`: Files/patterns to load from context root (standards, specs, templates)
+- `repo`: Files/patterns to load from repository root (existing code, examples)
 - `outputs`: Expected output files (informational)
 - `guarantees`: Requirements/constraints for LLM
 - Body: Detailed instructions with variable substitution
+
+Both `context` and `repo` sections support:
+- Individual files: `- /path/to/file.md`
+- Directories: `- /path/to/directory/` (loads all files recursively)
 
 ### Example Tasks
 
