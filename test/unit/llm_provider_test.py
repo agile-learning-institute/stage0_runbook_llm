@@ -63,25 +63,11 @@ class TestOpenAIClient(unittest.TestCase):
 class TestCreateLLMClient(unittest.TestCase):
     """Tests for create_llm_client factory."""
 
-    def setUp(self):
-        # Reset Config singleton
-        try:
-            import config
-            config.Config._instance = None
-        except ImportError:
-            pass
-
     def tearDown(self):
         # Clean up environment variables
         for key in ["LLM_PROVIDER", "LLM_MODEL", "LLM_BASE_URL", "LLM_API_KEY"]:
             if key in os.environ:
                 del os.environ[key]
-        # Reset Config singleton
-        try:
-            import config
-            config.Config._instance = None
-        except ImportError:
-            pass
 
     def test_create_null_client(self):
         """Test creating a null client."""
