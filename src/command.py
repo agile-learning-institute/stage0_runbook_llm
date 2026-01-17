@@ -1,7 +1,6 @@
 """CLI command entry point."""
 import os
 import sys
-import argparse
 import logging
 
 from .config import Config
@@ -15,46 +14,30 @@ def main():
     # Initialize config (configures logging)
     config = Config()
     
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description="LLM-powered code transformation executor")
-    parser.add_argument(
-        "--task",
-        required=True,
-        help="Task name (without .md extension)"
-    )
-    parser.add_argument(
-        "--repo-root",
-        default=None,
-        help="Repository root path (default: from config/REPO_ROOT env var)"
-    )
-    parser.add_argument(
-        "--context-root",
-        default=None,
-        help="Context root path (default: from config/CONTEXT_ROOT env var)"
-    )
-
-    args = parser.parse_args()
-
-    # Use config values with command-line overrides
-    repo_root = args.repo_root or config.REPO_ROOT
-    context_root = args.context_root or config.CONTEXT_ROOT
-
-    # Validate required environment variables
+    # Validate required configuration
+    if not config.TASK_NAME:
+        logger.error("TASK_NAME environment variable is required")
+        sys.exit(1)
+    
     if not config.TRACKING_BREADCRUMB:
         logger.warning("TRACKING_BREADCRUMB not set")
 
     # Validate paths
-    if not os.path.exists(repo_root):
-        logger.error(f"Repository root does not exist: {repo_root}")
+    if not os.path.exists(config.REPO_ROOT):
+        logger.error(f"Repository root does not exist: {config.REPO_ROOT}")
         sys.exit(1)
 
-    if not os.path.exists(context_root):
-        logger.error(f"Context root does not exist: {context_root}")
+    if not os.path.exists(config.CONTEXT_ROOT):
+        logger.error(f"Context root does not exist: {config.CONTEXT_ROOT}")
         sys.exit(1)
 
     try:
         # Execute task
-        commit_message, patch = Executor.execute_task(repo_root, context_root, args.task)
+        commit_message, patch = Executor.execute_task(
+            config.REPO_ROOT,
+            config.CONTEXT_ROOT,
+            config.TASK_NAME
+        )
 
         # Output to stdout in the required format
         print("---COMMIT_MSG---")

@@ -18,18 +18,19 @@ The executor is a pure function: reads inputs, executes one task, writes patch o
 docker run --rm \
   -v /path/to/repo:/workspace/repo \
   -v /path/to/context:/workspace/context \
+  -e TASK_NAME=example \
   -e LLM_PROVIDER=ollama \
   -e LLM_MODEL=codellama \
   -e LLM_BASE_URL=http://localhost:11434 \
   -e TRACKING_BREADCRUMB="user:admin,role:ci,ts:2024-01-01T00:00:00Z,corr:abc123" \
-  ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest \
-  --task example
+  ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest
 ```
 
 ### Local Development
 
 ```bash
 pipenv install
+export TASK_NAME=example
 export LLM_PROVIDER=ollama
 export LLM_MODEL=codellama
 export LLM_BASE_URL=http://localhost:11434
@@ -37,7 +38,7 @@ export REPO_ROOT=/path/to/repo
 export CONTEXT_ROOT=/path/to/context
 export TRACKING_BREADCRUMB="user:dev,role:dev,ts:$(date -u +%Y-%m-%dT%H:%M:%SZ),corr:test"
 
-pipenv run task --task example
+pipenv run task
 ```
 
 ### Output Format
@@ -133,7 +134,7 @@ Provider interface is extensible via `LLMClient` protocol in `src/llm_provider.p
 pipenv install --dev
 pipenv run test          # Run unit tests
 pipenv run e2e          # Run end-to-end tests
-pipenv run task --task example  # Run locally
+pipenv run task  # Run locally (requires TASK_NAME env var)
 pipenv run container     # Build Docker image
 pipenv run deploy        # Test container locally
 ```

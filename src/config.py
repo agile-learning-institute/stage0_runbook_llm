@@ -47,22 +47,24 @@ class Config:
         """
         self.config_items = []
         
-        # Declare instance variables to support IDE code assist
-        self.REPO_ROOT = ''
-        self.CONTEXT_ROOT = ''
-        self.LOG_LEVEL = ''
-        self.TRACKING_BREADCRUMB = ''
-        self.LLM_PROVIDER = ''
-        self.LLM_MODEL = ''
-        self.LLM_BASE_URL = ''
-        self.LLM_API_KEY = ''
-        self.LLM_TEMPERATURE = 0.0
-        self.LLM_MAX_TOKENS = 0
+            # Declare instance variables to support IDE code assist
+            self.REPO_ROOT = ''
+            self.CONTEXT_ROOT = ''
+            self.TASK_NAME = ''
+            self.LOG_LEVEL = ''
+            self.TRACKING_BREADCRUMB = ''
+            self.LLM_PROVIDER = ''
+            self.LLM_MODEL = ''
+            self.LLM_BASE_URL = ''
+            self.LLM_API_KEY = ''
+            self.LLM_TEMPERATURE = 0.0
+            self.LLM_MAX_TOKENS = 0
 
         # Default Values grouped by value type            
         self.config_strings = {
             "REPO_ROOT": "/workspace/repo",
             "CONTEXT_ROOT": "/workspace/context",
+            "TASK_NAME": "",
             "LOG_LEVEL": "INFO",
             "TRACKING_BREADCRUMB": "",
             "LLM_PROVIDER": "null",  # null, ollama, openai, azure

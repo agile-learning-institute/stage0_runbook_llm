@@ -3,7 +3,6 @@ import unittest
 import os
 import sys
 import tempfile
-import subprocess
 from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
 
@@ -40,16 +39,16 @@ Test task content.
         
         os.environ["REPO_ROOT"] = self.repo_dir
         os.environ["CONTEXT_ROOT"] = self.context_dir
+        os.environ["TASK_NAME"] = "test_task"
 
     def tearDown(self):
         """Clean up after tests."""
         import shutil
         shutil.rmtree(self.temp_dir)
-        for key in ["REPO_ROOT", "CONTEXT_ROOT", "TRACKING_BREADCRUMB", "LLM_PROVIDER"]:
+        for key in ["REPO_ROOT", "CONTEXT_ROOT", "TASK_NAME", "TRACKING_BREADCRUMB", "LLM_PROVIDER"]:
             if key in os.environ:
                 del os.environ[key]
 
-    @patch('sys.argv', ['command', '--task', 'test_task'])
     @patch('sys.stdout')
     @patch('sys.exit')
     def test_main_success(self, mock_exit, mock_stdout):
@@ -74,10 +73,10 @@ Test task content.
         # Check exit was called with 0
         mock_exit.assert_called_once_with(0)
 
-    @patch('sys.argv', ['command', '--task', 'nonexistent'])
     @patch('sys.exit')
     def test_main_task_not_found(self, mock_exit):
         """Test handling of non-existent task."""
+        os.environ["TASK_NAME"] = "nonexistent"
         from command import main
         
         with patch('sys.stderr'):
@@ -86,10 +85,10 @@ Test task content.
         # Should exit with error code 1
         mock_exit.assert_called_once_with(1)
 
-    @patch('sys.argv', ['command', '--task', 'test_task', '--repo-root', '/nonexistent'])
     @patch('sys.exit')
     def test_main_repo_root_not_found(self, mock_exit):
         """Test handling of non-existent repo root."""
+        os.environ["REPO_ROOT"] = "/nonexistent"
         from command import main
         
         with patch('sys.stderr'):
@@ -98,10 +97,10 @@ Test task content.
         # Should exit with error code 1
         mock_exit.assert_called_once_with(1)
 
-    @patch('sys.argv', ['command', '--task', 'test_task', '--context-root', '/nonexistent'])
     @patch('sys.exit')
     def test_main_context_root_not_found(self, mock_exit):
         """Test handling of non-existent context root."""
+        os.environ["CONTEXT_ROOT"] = "/nonexistent"
         from command import main
         
         with patch('sys.stderr'):
@@ -110,35 +109,18 @@ Test task content.
         # Should exit with error code 1
         mock_exit.assert_called_once_with(1)
 
-    @patch('sys.argv', ['command', '--task', 'test_task', '--repo-root'])
-    def test_main_missing_repo_root_value(self):
-        """Test handling of missing repo-root value."""
-        # argparse will handle this, but we test it doesn't crash
+    @patch('sys.exit')
+    def test_main_missing_task_name(self, mock_exit):
+        """Test handling of missing TASK_NAME environment variable."""
+        if "TASK_NAME" in os.environ:
+            del os.environ["TASK_NAME"]
         from command import main
         
-        # This should raise SystemExit from argparse
-        with self.assertRaises(SystemExit):
+        with patch('sys.stderr'):
             main()
-
-    def test_argument_parsing(self):
-        """Test that command line arguments are parsed correctly."""
-        from command import main
-        from unittest.mock import patch
         
-        with patch('sys.argv', ['command', '--task', 'my_task', '--repo-root', '/custom/repo']):
-            with patch('command.Executor') as mock_executor:
-                mock_executor_instance = MagicMock()
-                mock_executor_instance.execute_task.return_value = ("test commit", "test patch")
-                mock_executor.return_value = mock_executor_instance
-                
-                with patch('sys.stdout'):
-                    with patch('sys.exit'):
-                        main()
-                
-                # Check that executor was called with custom repo root
-                mock_executor.assert_called_once()
-                args = mock_executor.call_args[0]
-                self.assertEqual(args[0], "/custom/repo")
+        # Should exit with error code 1
+        mock_exit.assert_called_once_with(1)
 
 
 if __name__ == "__main__":
