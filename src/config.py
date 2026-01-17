@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class Config:
     """
-    Singleton configuration manager for the application.
+    Configuration manager for the application.
     
     The Config class provides centralized configuration management with a priority
     system for configuration sources:
@@ -29,68 +29,59 @@ class Config:
     accidental exposure in logs or API responses.
     
     Attributes:
-        _instance (Config): The singleton instance of the Config class.
         config_items (list): List of dictionaries tracking each config value's
             source and value (secrets are masked).
     
     Example:
-        >>> config = Config.get_instance()
+        >>> config = Config()
         >>> print(config.REPO_ROOT)
         /workspace/repo
     """
-    _instance = None  # Singleton instance
 
     def __init__(self):
         """
-        Initialize the Config singleton instance.
+        Initialize the Config instance.
         
-        Raises:
-            Exception: If an instance already exists (singleton pattern enforcement).
-        
-        Note:
-            This constructor should not be called directly. Use get_instance() instead.
+        Reads configuration from environment variables or uses defaults,
+        and configures logging based on LOG_LEVEL.
         """
-        if Config._instance is not None:
-            raise Exception("This class is a singleton!")
-        else:
-            Config._instance = self
-            self.config_items = []
-            
-            # Declare instance variables to support IDE code assist
-            self.REPO_ROOT = ''
-            self.CONTEXT_ROOT = ''
-            self.LOG_LEVEL = ''
-            self.TRACKING_BREADCRUMB = ''
-            self.LLM_PROVIDER = ''
-            self.LLM_MODEL = ''
-            self.LLM_BASE_URL = ''
-            self.LLM_API_KEY = ''
-            self.LLM_TEMPERATURE = 0.0
-            self.LLM_MAX_TOKENS = 0
-    
-            # Default Values grouped by value type            
-            self.config_strings = {
-                "REPO_ROOT": "/workspace/repo",
-                "CONTEXT_ROOT": "/workspace/context",
-                "LOG_LEVEL": "INFO",
-                "TRACKING_BREADCRUMB": "",
-                "LLM_PROVIDER": "null",  # null, ollama, openai, azure
-                "LLM_MODEL": "codellama",
-                "LLM_BASE_URL": "http://localhost:11434",
-            }
-            
-            self.config_ints = {
-                "LLM_TEMPERATURE": "7",  # Stored as int (70 = 0.7), converted to float in accessor
-                "LLM_MAX_TOKENS": "8192",
-            }
+        self.config_items = []
+        
+        # Declare instance variables to support IDE code assist
+        self.REPO_ROOT = ''
+        self.CONTEXT_ROOT = ''
+        self.LOG_LEVEL = ''
+        self.TRACKING_BREADCRUMB = ''
+        self.LLM_PROVIDER = ''
+        self.LLM_MODEL = ''
+        self.LLM_BASE_URL = ''
+        self.LLM_API_KEY = ''
+        self.LLM_TEMPERATURE = 0.0
+        self.LLM_MAX_TOKENS = 0
 
-            self.config_string_secrets = {  
-                "LLM_API_KEY": ""
-            }
-            
-            # Initialize configuration
-            self.initialize()
-            self.configure_logging()
+        # Default Values grouped by value type            
+        self.config_strings = {
+            "REPO_ROOT": "/workspace/repo",
+            "CONTEXT_ROOT": "/workspace/context",
+            "LOG_LEVEL": "INFO",
+            "TRACKING_BREADCRUMB": "",
+            "LLM_PROVIDER": "null",  # null, ollama, openai, azure
+            "LLM_MODEL": "codellama",
+            "LLM_BASE_URL": "http://localhost:11434",
+        }
+        
+        self.config_ints = {
+            "LLM_TEMPERATURE": "7",  # Stored as int (70 = 0.7), converted to float in accessor
+            "LLM_MAX_TOKENS": "8192",
+        }
+
+        self.config_string_secrets = {  
+            "LLM_API_KEY": ""
+        }
+        
+        # Initialize configuration
+        self.initialize()
+        self.configure_logging()
 
     def initialize(self):
         """
@@ -236,22 +227,3 @@ class Config:
             return self.config_string_secrets[name]
         return None
 
-    @staticmethod
-    def get_instance():
-        """
-        Get the singleton instance of the Config class.
-        
-        This is the preferred way to access the Config instance. If no instance
-        exists, one will be created automatically.
-        
-        Returns:
-            Config: The singleton Config instance.
-        
-        Example:
-            >>> config = Config.get_instance()
-            >>> repo_root = config.REPO_ROOT
-        """
-        if Config._instance is None:
-            Config()
-            
-        return Config._instance

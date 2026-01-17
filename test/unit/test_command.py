@@ -40,10 +40,6 @@ Test task content.
         
         os.environ["REPO_ROOT"] = self.repo_dir
         os.environ["CONTEXT_ROOT"] = self.context_dir
-        
-        # Reset config singleton
-        from config import Config
-        Config._instance = None
 
     def tearDown(self):
         """Clean up after tests."""
@@ -52,8 +48,6 @@ Test task content.
         for key in ["REPO_ROOT", "CONTEXT_ROOT", "TRACKING_BREADCRUMB", "LLM_PROVIDER"]:
             if key in os.environ:
                 del os.environ[key]
-        from config import Config
-        Config._instance = None
 
     @patch('sys.argv', ['command', '--task', 'test_task'])
     @patch('sys.stdout')

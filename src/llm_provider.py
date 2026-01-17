@@ -125,7 +125,7 @@ class OpenAIClient:
 def create_llm_client() -> LLMClient:
     """Factory function to create an LLM client based on configuration."""
     from .config import Config
-    config = Config.get_instance()
+    config = Config()
     
     provider = config.LLM_PROVIDER.lower()
     model = config.LLM_MODEL

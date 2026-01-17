@@ -12,8 +12,6 @@ class TestConfig(unittest.TestCase):
 
     def setUp(self):
         """Set up test environment."""
-        # Reset singleton instance
-        Config._instance = None
         # Clear environment variables
         env_vars_to_clear = [
             "REPO_ROOT", "CONTEXT_ROOT", "LOG_LEVEL", "TRACKING_BREADCRUMB",
@@ -26,7 +24,6 @@ class TestConfig(unittest.TestCase):
 
     def tearDown(self):
         """Clean up after tests."""
-        Config._instance = None
         # Clear environment variables
         env_vars_to_clear = [
             "REPO_ROOT", "CONTEXT_ROOT", "LOG_LEVEL", "TRACKING_BREADCRUMB",
@@ -37,23 +34,9 @@ class TestConfig(unittest.TestCase):
             if key in os.environ:
                 del os.environ[key]
 
-    def test_singleton_pattern(self):
-        """Test that Config is a singleton."""
-        config1 = Config.get_instance()
-        config2 = Config.get_instance()
-        self.assertIs(config1, config2)
-        self.assertEqual(id(config1), id(config2))
-
-    def test_cannot_create_multiple_instances(self):
-        """Test that direct instantiation raises exception."""
-        Config.get_instance()
-        with self.assertRaises(Exception) as context:
-            Config()
-        self.assertIn("singleton", str(context.exception).lower())
-
     def test_default_values(self):
         """Test that default values are set correctly."""
-        config = Config.get_instance()
+        config = Config()
         self.assertEqual(config.REPO_ROOT, "/workspace/repo")
         self.assertEqual(config.CONTEXT_ROOT, "/workspace/context")
         self.assertEqual(config.LOG_LEVEL, logging.INFO)
@@ -71,8 +54,7 @@ class TestConfig(unittest.TestCase):
         os.environ["LLM_TEMPERATURE"] = "8"
         os.environ["LLM_MAX_TOKENS"] = "4096"
         
-        Config._instance = None
-        config = Config.get_instance()
+        config = Config()
         
         self.assertEqual(config.REPO_ROOT, "/custom/repo")
         self.assertEqual(config.LLM_PROVIDER, "ollama")
@@ -82,7 +64,7 @@ class TestConfig(unittest.TestCase):
 
     def test_config_items_tracking(self):
         """Test that config_items tracks all configuration values."""
-        config = Config.get_instance()
+        config = Config()
         self.assertGreater(len(config.config_items), 0)
         
         # Check that all config values are tracked
@@ -94,8 +76,7 @@ class TestConfig(unittest.TestCase):
     def test_secret_masking(self):
         """Test that secrets are masked in config_items."""
         os.environ["LLM_API_KEY"] = "secret-key-123"
-        Config._instance = None
-        config = Config.get_instance()
+        config = Config()
         
         api_key_item = next(item for item in config.config_items if item["name"] == "LLM_API_KEY")
         self.assertEqual(api_key_item["value"], "secret")
@@ -104,8 +85,7 @@ class TestConfig(unittest.TestCase):
     def test_get_llm_temperature_as_float(self):
         """Test that get_llm_temperature returns float value."""
         os.environ["LLM_TEMPERATURE"] = "7"
-        Config._instance = None
-        config = Config.get_instance()
+        config = Config()
         
         temp = config.get_llm_temperature()
         self.assertIsInstance(temp, float)
@@ -113,7 +93,7 @@ class TestConfig(unittest.TestCase):
 
     def test_get_default(self):
         """Test get_default method."""
-        config = Config.get_instance()
+        config = Config()
         self.assertEqual(config.get_default("REPO_ROOT"), "/workspace/repo")
         # get_default returns int for config_ints values (converted from string)
         self.assertEqual(config.get_default("LLM_TEMPERATURE"), 7)
@@ -122,8 +102,7 @@ class TestConfig(unittest.TestCase):
 
     def test_logging_configuration(self):
         """Test that logging is configured."""
-        Config._instance = None
-        config = Config.get_instance()
+        config = Config()
         
         # Check that root logger level is set
         self.assertEqual(logging.root.level, config.LOG_LEVEL)
@@ -131,8 +110,7 @@ class TestConfig(unittest.TestCase):
     def test_log_level_from_env(self):
         """Test that LOG_LEVEL environment variable is respected."""
         os.environ["LOG_LEVEL"] = "DEBUG"
-        Config._instance = None
-        config = Config.get_instance()
+        config = Config()
         
         self.assertEqual(config.LOG_LEVEL, logging.DEBUG)
         self.assertEqual(logging.root.level, logging.DEBUG)

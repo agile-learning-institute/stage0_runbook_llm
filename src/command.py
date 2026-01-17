@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def main():
     """CLI command entry point."""
     # Initialize config (configures logging)
-    config = Config.get_instance()
+    config = Config()
     
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="LLM-powered code transformation executor")

@@ -43,7 +43,7 @@ class Executor:
 
         # Execute LLM call
         from .config import Config
-        config = Config.get_instance()
+        config = Config()
         
         logger.info("Executing LLM task...")
         response = self.llm_client.complete(

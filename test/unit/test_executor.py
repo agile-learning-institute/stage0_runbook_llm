@@ -27,10 +27,6 @@ class TestExecutor(unittest.TestCase):
         # Set environment for config
         os.environ["LLM_PROVIDER"] = "null"
         os.environ["TRACKING_BREADCRUMB"] = "user:test,role:test,ts:2024-01-01T00:00:00Z,corr:test"
-        
-        # Reset config singleton
-        from config import Config
-        Config._instance = None
 
     def tearDown(self):
         """Clean up after tests."""
@@ -38,8 +34,6 @@ class TestExecutor(unittest.TestCase):
         for key in ["LLM_PROVIDER", "TRACKING_BREADCRUMB"]:
             if key in os.environ:
                 del os.environ[key]
-        from config import Config
-        Config._instance = None
 
     def test_executor_initialization(self):
         """Test executor initialization."""

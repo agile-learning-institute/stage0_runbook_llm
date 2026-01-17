@@ -38,10 +38,6 @@ class TestE2E(unittest.TestCase):
         os.environ["LOG_LEVEL"] = "INFO"
         os.environ["TRACKING_BREADCRUMB"] = "user:test,role:test,ts:2024-01-01T00:00:00Z,corr:test123"
         
-        # Reset config singleton
-        from config import Config
-        Config._instance = None
-        
         try:
             executor = Executor(self.repo_root, self.context_root)
             commit_message, patch = executor.execute_task("simple_readme")
@@ -84,8 +80,6 @@ class TestE2E(unittest.TestCase):
             for key in ["LLM_PROVIDER", "LLM_MODEL", "LLM_BASE_URL", "REPO_ROOT", "CONTEXT_ROOT", "LOG_LEVEL", "TRACKING_BREADCRUMB"]:
                 if key in os.environ:
                     del os.environ[key]
-            # Reset config
-            Config._instance = None
 
 
 if __name__ == "__main__":
