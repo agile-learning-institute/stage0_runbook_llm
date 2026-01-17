@@ -64,3 +64,29 @@ class TaskLoader:
                 logger.warning(f"Context path not found: {resolved_path}")
 
         return context_files
+
+    @staticmethod
+    def load_repo_files(repo_root: str, repo_paths: List[str]) -> Dict[str, str]:
+        """Load repository files from the repo root."""
+        repo_files = {}
+        
+        for path_spec in repo_paths:
+            # Resolve relative to repo_root
+            resolved_path = os.path.join(repo_root, path_spec.lstrip("/"))
+            
+            if os.path.isfile(resolved_path):
+                with open(resolved_path, "r") as f:
+                    # Prefix with repo: to distinguish from context files
+                    repo_files[f"repo:{path_spec}"] = f.read()
+            elif os.path.isdir(resolved_path):
+                # Load all files in directory
+                for root, _, files in os.walk(resolved_path):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        rel_path = os.path.relpath(file_path, repo_root)
+                        with open(file_path, "r") as f:
+                            repo_files[f"repo:{rel_path}"] = f.read()
+            else:
+                logger.warning(f"Repo path not found: {resolved_path}")
+
+        return repo_files

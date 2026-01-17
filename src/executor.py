@@ -30,11 +30,19 @@ class Executor:
         task = TaskLoader.load_task(context_root, task_name)
         logger.info(f"Loaded task: {task_name}")
 
-        # Load context files
+        # Load context and repo files
         context_files = {}
         if "context" in task:
-            context_files = TaskLoader.load_context_files(context_root, task["context"])
-            logger.info(f"Loaded {len(context_files)} context files")
+            context_files.update(TaskLoader.load_context_files(context_root, task["context"]))
+            logger.info(f"Loaded {len(task['context'])} context file paths")
+        
+        if "repo" in task:
+            repo_files = TaskLoader.load_repo_files(repo_root, task["repo"])
+            context_files.update(repo_files)
+            logger.info(f"Loaded {len(task['repo'])} repo file paths")
+        
+        if context_files:
+            logger.info(f"Total context files loaded: {len(context_files)}")
 
         # Build system prompt from task and context
         system_prompt = Executor._build_system_prompt(task, context_files)
