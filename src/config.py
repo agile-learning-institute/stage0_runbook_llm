@@ -1,11 +1,12 @@
 """
 Configuration management module for stage0_runbook_llm.
 
-This module provides a singleton Config class that manages application configuration
+This module provides a Config class that manages application configuration
 with support for configuration sources (environment variables, defaults).
+
+Requires Python 3.8+ (for logging.basicConfig force=True parameter).
 """
 import os
-import sys
 import logging
 
 logger = logging.getLogger(__name__)
@@ -124,11 +125,13 @@ class Config:
         """
         Configure Python logging based on the LOG_LEVEL configuration.
         
-        This method is called once during Config singleton initialization to set up
+        This method is called once during Config initialization to set up
         Python logging with the configured level and format. It uses force=True to
         ensure logging is properly configured even if handlers already exist.
         
         The logging format includes timestamp, level, logger name, and message.
+        
+        Requires Python 3.8+ (force=True parameter).
         """
         # Convert LOG_LEVEL string to logging constant
         if isinstance(self.LOG_LEVEL, str):
@@ -140,23 +143,13 @@ class Config:
             logging_level = logging.INFO
             self.LOG_LEVEL = logging_level
         
-        # Configure logging with force=True to reconfigure even if handlers exist
-        if sys.version_info >= (3, 8):
-            logging.basicConfig(
-                level=logging_level,
-                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
-                force=True
-            )
-        else:
-            # For Python < 3.8, reset handlers manually first
-            for handler in logging.root.handlers[:]:
-                logging.root.removeHandler(handler)
-            logging.basicConfig(
-                level=logging_level,
-                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S"
-            )
+        # Configure logging with force=True (requires Python 3.8+)
+        logging.basicConfig(
+            level=logging_level,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+            force=True
+        )
 
         # Ensure root logger level is set (child loggers inherit this)
         logging.root.setLevel(logging_level)
