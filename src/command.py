@@ -14,15 +14,7 @@ def main():
     # Initialize config (configures logging)
     config = Config()
     
-    # Validate required configuration
-    if not config.TASK_NAME:
-        logger.error("TASK_NAME environment variable is required")
-        sys.exit(1)
-    
-    if not config.TRACKING_BREADCRUMB:
-        logger.warning("TRACKING_BREADCRUMB not set")
-
-    # Validate paths
+    # Validate that required paths exist
     if not os.path.exists(config.REPO_ROOT):
         logger.error(f"Repository root does not exist: {config.REPO_ROOT}")
         sys.exit(1)

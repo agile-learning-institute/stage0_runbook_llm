@@ -109,18 +109,6 @@ Test task content.
         # Should exit with error code 1
         mock_exit.assert_called_once_with(1)
 
-    @patch('sys.exit')
-    def test_main_missing_task_name(self, mock_exit):
-        """Test handling of missing TASK_NAME environment variable."""
-        if "TASK_NAME" in os.environ:
-            del os.environ["TASK_NAME"]
-        from command import main
-        
-        with patch('sys.stderr'):
-            main()
-        
-        # Should exit with error code 1
-        mock_exit.assert_called_once_with(1)
 
 
 if __name__ == "__main__":
