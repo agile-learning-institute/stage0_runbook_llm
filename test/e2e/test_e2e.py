@@ -38,7 +38,7 @@ class TestE2E(unittest.TestCase):
         os.environ["LOG_LEVEL"] = "INFO"
         
         try:
-            commit_message, patch = Executor.execute_task(self.repo_root, self.context_root, "simple_readme")
+            commit_message, patch = Executor.execute_task(self.repo_root, "simple_readme", context_root=self.context_root)
             
             # Verify output format - commit_message and patch are already parsed
             self.assertIn("README.md", patch)
