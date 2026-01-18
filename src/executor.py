@@ -59,17 +59,17 @@ class Executor:
 
         # Load context and repo files
         context_files = {}
-        if "context" in task:
+        if "context" in task and task["context"]:
             if not context_root:
                 raise ValueError(
                     f"Task requires context files but CONTEXT_ROOT is not set. "
                     f"Task specifies context paths: {task['context']}"
                 )
-            context_files.update(TaskLoader.load_context_files(context_root, task["context"]))
+            context_files.update(TaskLoader.load_context_files(context_root, task["context"], task_variables))
             logger.info(f"Loaded {len(task['context'])} context file paths")
         
-        if "repo" in task:
-            repo_files = TaskLoader.load_repo_files(repo_root, task["repo"])
+        if "repo" in task and task["repo"]:
+            repo_files = TaskLoader.load_repo_files(repo_root, task["repo"], task_variables)
             context_files.update(repo_files)
             logger.info(f"Loaded {len(task['repo'])} repo file paths")
         
