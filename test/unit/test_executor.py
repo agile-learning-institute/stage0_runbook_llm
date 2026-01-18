@@ -26,12 +26,11 @@ class TestExecutor(unittest.TestCase):
         
         # Set environment for config
         os.environ["LLM_PROVIDER"] = "null"
-        os.environ["TRACKING_BREADCRUMB"] = "user:test,role:test,ts:2024-01-01T00:00:00Z,corr:test"
 
     def tearDown(self):
         """Clean up after tests."""
         shutil.rmtree(self.temp_dir)
-        for key in ["LLM_PROVIDER", "TRACKING_BREADCRUMB"]:
+        for key in ["LLM_PROVIDER"]:
             if key in os.environ:
                 del os.environ[key]
 

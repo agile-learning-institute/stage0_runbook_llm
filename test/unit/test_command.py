@@ -13,7 +13,6 @@ class TestCommand(unittest.TestCase):
     def setUp(self):
         """Set up test environment."""
         # Set up minimal environment
-        os.environ["TRACKING_BREADCRUMB"] = "user:test,role:test,ts:2024-01-01T00:00:00Z,corr:test"
         os.environ["LLM_PROVIDER"] = "null"
         
         # Create temporary directories
@@ -45,7 +44,7 @@ Test task content.
         """Clean up after tests."""
         import shutil
         shutil.rmtree(self.temp_dir)
-        for key in ["REPO_ROOT", "CONTEXT_ROOT", "TASK_NAME", "TRACKING_BREADCRUMB", "LLM_PROVIDER"]:
+        for key in ["REPO_ROOT", "CONTEXT_ROOT", "TASK_NAME", "LLM_PROVIDER"]:
             if key in os.environ:
                 del os.environ[key]
 

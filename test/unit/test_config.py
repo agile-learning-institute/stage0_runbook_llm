@@ -14,7 +14,7 @@ class TestConfig(unittest.TestCase):
         """Set up test environment."""
         # Clear environment variables
         env_vars_to_clear = [
-            "REPO_ROOT", "CONTEXT_ROOT", "LOG_LEVEL", "TRACKING_BREADCRUMB",
+            "REPO_ROOT", "CONTEXT_ROOT", "LOG_LEVEL",
             "LLM_PROVIDER", "LLM_MODEL", "LLM_BASE_URL", "LLM_API_KEY",
             "LLM_TEMPERATURE", "LLM_MAX_TOKENS"
         ]
@@ -26,7 +26,7 @@ class TestConfig(unittest.TestCase):
         """Clean up after tests."""
         # Clear environment variables
         env_vars_to_clear = [
-            "REPO_ROOT", "CONTEXT_ROOT", "LOG_LEVEL", "TRACKING_BREADCRUMB",
+            "REPO_ROOT", "CONTEXT_ROOT", "LOG_LEVEL",
             "LLM_PROVIDER", "LLM_MODEL", "LLM_BASE_URL", "LLM_API_KEY",
             "LLM_TEMPERATURE", "LLM_MAX_TOKENS"
         ]
