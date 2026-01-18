@@ -35,4 +35,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest
+          tags: ghcr.io/agile-learning-institute/stage0_runbook_llm:latest

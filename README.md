@@ -20,9 +20,9 @@ The executor is a pure function: reads inputs, executes one task, writes patch o
 # And LLM Services hosed on the Dev Spark
 pipenv install
 export TASK_NAME=simple_readme
-pipenv run spark
+make spark
 
-# Run a task with full control
+# Setup Environment
 export TASK_NAME=example
 export LLM_PROVIDER=ollama
 export LLM_MODEL=codellama
@@ -38,15 +38,27 @@ pipenv run test
 
 # Run end-to-end tests
 pipenv run e2e
+```
 
+### Container Related Commands
+```sh
 # Build the Docker Container
-pipenv run container
+make container
 
 # Run E2E tests using the Docker Container
-pipenv run container
+make e2e
 
 # Run the configured script using the container
-pipenv run deploy
+make deploy
+
+# Run the configured script using the NVIDIA Spark LLM backing service
+make spark
+
+# Show the current configuration values
+make show-config
+
+# Get a command to clear all env config values
+make clear-config
 ```
 
 ### Output Format
@@ -78,7 +90,7 @@ docker run --rm \
   -e LLM_PROVIDER=ollama \
   -e LLM_MODEL=codellama \
   -e LLM_BASE_URL=http://localhost:11434 \
-  ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest
+  ghcr.io/agile-learning-institute/stage0_runbook_llm:latest
 ```
 
 ## Configuration
