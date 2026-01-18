@@ -17,9 +17,8 @@ The executor is a pure function: reads inputs, executes one task, writes patch o
 ```bash
 docker run --rm \
   -v /path/to/repo:/workspace/repo \
-  -v /path/to/context:/workspace/context \
+  # -v /path/to/context:/workspace/context \  # Optional: only needed if tasks use context files
   -e TASK_NAME=example \
-  # CONTEXT_ROOT is optional - only needed if tasks use context files
   -e LLM_PROVIDER=ollama \
   -e LLM_MODEL=codellama \
   -e LLM_BASE_URL=http://localhost:11434 \
