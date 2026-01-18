@@ -83,6 +83,7 @@ index 0000000..abc1234
 ### Container Execution
 
 ```bash
+# Run the container and extract the patch
 docker run --rm \
   -v /path/to/repo:/workspace/repo \
   # -v /path/to/context:/workspace/context \  # Optional: only needed if tasks use context files
@@ -90,7 +91,12 @@ docker run --rm \
   -e LLM_PROVIDER=ollama \
   -e LLM_MODEL=codellama \
   -e LLM_BASE_URL=http://localhost:11434 \
-  ghcr.io/agile-learning-institute/stage0_runbook_llm:latest
+  ghcr.io/agile-learning-institute/stage0_runbook_llm:latest | \
+  sed -n '/---PATCH---/,$p' | sed '1d' | (cd /path/to/repo && git apply)
+
+# Or save output and apply separately:
+# docker run ... > output.txt
+# sed -n '/---PATCH---/,$p' output.txt | sed '1d' | (cd /path/to/repo && git apply)
 ```
 
 ## Configuration
