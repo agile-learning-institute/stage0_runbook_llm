@@ -27,4 +27,3 @@ dist/
 build/
 *.egg
 .DS_Store
-Pipfile.lock
