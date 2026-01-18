@@ -19,6 +19,7 @@ docker run --rm \
   -v /path/to/repo:/workspace/repo \
   -v /path/to/context:/workspace/context \
   -e TASK_NAME=example \
+  # CONTEXT_ROOT is optional - only needed if tasks use context files
   -e LLM_PROVIDER=ollama \
   -e LLM_MODEL=codellama \
   -e LLM_BASE_URL=http://localhost:11434 \
@@ -35,6 +36,7 @@ export LLM_PROVIDER=ollama
 export LLM_MODEL=codellama
 export LLM_BASE_URL=http://localhost:11434
 export REPO_ROOT=/path/to/repo
+# CONTEXT_ROOT is optional - only needed if tasks use context files
 export CONTEXT_ROOT=/path/to/context
 export TRACKING_BREADCRUMB="user:dev,role:dev,ts:$(date -u +%Y-%m-%dT%H:%M:%SZ),corr:test"
 
@@ -72,7 +74,11 @@ The Config class follows a singleton pattern and automatically configures loggin
 
 ## Task Definitions
 
-Tasks are markdown files with YAML frontmatter in `{CONTEXT_ROOT}/tasks/{name}.md`:
+Tasks are markdown files with YAML frontmatter. Task files are searched in this order:
+1. `{REPO_ROOT}/tasks/{name}.md` (searched first)
+2. `{CONTEXT_ROOT}/tasks/{name}.md` (fallback if not found in repo)
+
+This allows tasks to be stored either in the repository or in a separate context mount. If a task specifies context files, `CONTEXT_ROOT` must be set.
 
 ```yaml
 ---
