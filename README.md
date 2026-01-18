@@ -12,33 +12,35 @@ The executor is a pure function: reads inputs, executes one task, writes patch o
 
 ## Usage
 
-### Container
-
-```bash
-docker run --rm \
-  -v /path/to/repo:/workspace/repo \
-  # -v /path/to/context:/workspace/context \  # Optional: only needed if tasks use context files
-  -e TASK_NAME=example \
-  -e LLM_PROVIDER=ollama \
-  -e LLM_MODEL=codellama \
-  -e LLM_BASE_URL=http://localhost:11434 \
-  ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest
-```
-
 ### Local Development
 
+#### Developer Commands
+
 ```bash
+# Quick Start
+pipenv install
+export TASK_NAME=simple_readme
+pipenv run onspark
+
+# Full Configuration
 pipenv install
 export TASK_NAME=example
 export LLM_PROVIDER=ollama
 export LLM_MODEL=codellama
 export LLM_BASE_URL=http://localhost:11434
 export REPO_ROOT=/path/to/repo
-# CONTEXT_ROOT is optional - only needed if tasks use context files
-export CONTEXT_ROOT=/path/to/context
+export CONTEXT_ROOT=/path/to/context  # Optional: only needed if tasks use context files
 
 pipenv run task
 ```
+
+**Available Commands:**
+- `pipenv run onspark` - Quick start with test/repo, test/context, and Ollama pre-configured (requires TASK_NAME)
+- `pipenv run task` - Run with full environment variable configuration
+- `pipenv run test` - Run unit tests
+- `pipenv run e2e` - Run end-to-end tests
+- `pipenv run container` - Build Docker image
+- `pipenv run deploy` - Test container locally
 
 ### Output Format
 
@@ -59,6 +61,19 @@ index 0000000..abc1234
 +...
 ```
 
+### Container Execution
+
+```bash
+docker run --rm \
+  -v /path/to/repo:/workspace/repo \
+  # -v /path/to/context:/workspace/context \  # Optional: only needed if tasks use context files
+  -e TASK_NAME=example \
+  -e LLM_PROVIDER=ollama \
+  -e LLM_MODEL=codellama \
+  -e LLM_BASE_URL=http://localhost:11434 \
+  ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest
+```
+
 ## Configuration
 
 Configuration is managed by the `Config` class in `src/config.py`. See that file for:
@@ -67,57 +82,11 @@ Configuration is managed by the `Config` class in `src/config.py`. See that file
 - Environment variable names
 - Configuration priority system
 
-The Config class follows a singleton pattern and automatically configures logging based on `LOG_LEVEL`.
+The Config class automatically configures logging based on `LOG_LEVEL`.
 
 ## Task Definitions
 
-Tasks are markdown files with YAML frontmatter. Task files are searched in this order:
-1. `{REPO_ROOT}/tasks/{name}.md` (searched first)
-2. `{CONTEXT_ROOT}/tasks/{name}.md` (fallback if not found in repo)
-
-This allows tasks to be stored either in the repository or in a separate context mount. If a task specifies context files, `CONTEXT_ROOT` must be set.
-
-```yaml
----
-description: Generate an OpenAPI spec for {SERVICE}
-context:
-  - /specs/api_standards.md
-  - /schemas/{SERVICE}.yaml
-repo:
-  - /src/api/routes.py
-  - /examples/
-environment:
-  - SERVICE
-  - API_VERSION
-outputs:
-  - /docs/openapi.yaml
-guarantees:
-  - OpenAPI 3.1
-  - Standard error envelope
----
-
-Task-specific instructions with {VARIABLE} substitution.
-Variables from environment section will be substituted in the task content.
-```
-
-**Fields:**
-- `description`: High-level task description
-- `context`: Files/patterns to load from context root (standards, specs, templates)
-- `repo`: Files/patterns to load from repository root (existing code, examples)
-- `environment`: List of required environment variable names (will be validated and used for substitution)
-- `outputs`: Expected output files (informational)
-- `guarantees`: Requirements/constraints for LLM
-- Body: Detailed instructions with variable substitution (e.g., `{SERVICE}` will be replaced with `$SERVICE` env var value)
-
-Both `context` and `repo` sections support:
-- Individual files: `- /path/to/file.md`
-- Directories: `- /path/to/directory/` (loads all files recursively)
-
-### Example Tasks
-
-See `test/context/tasks/` for example task definitions:
-- `example.md` - Example task for generating a README
-- `simple_readme.md` - Simple README generation task for testing
+See [TASKS.md](TASKS.md) for complete documentation on task file format, fields, and examples.
 
 ## LLM Providers
 
@@ -127,7 +96,7 @@ export LLM_PROVIDER=null
 ```
 Returns mock patch output for testing.
 
-### Ollama (Local)
+### Ollama (Local/Remote)
 ```bash
 export LLM_PROVIDER=ollama
 export LLM_MODEL=codellama
@@ -135,6 +104,9 @@ export LLM_BASE_URL=http://localhost:11434
 ```
 
 ### OpenAI / Azure
+
+**Note:** OpenAI and Azure configurations have not been tested and are not currently supported. The provider interface exists for future extensibility, but these examples are provided for reference only.
+
 ```bash
 export LLM_PROVIDER=openai
 export LLM_MODEL=gpt-4
@@ -144,18 +116,7 @@ export LLM_API_KEY=sk-...
 
 Provider interface is extensible via `LLMClient` protocol in `src/llm_provider.py`.
 
-## Development
-
-```bash
-pipenv install --dev
-pipenv run test          # Run unit tests
-pipenv run e2e          # Run end-to-end tests
-pipenv run task  # Run locally (requires TASK_NAME env var)
-pipenv run container     # Build Docker image
-pipenv run deploy        # Test container locally
-```
-
-### Project Structure
+## Project Structure
 
 ```
 src/
@@ -181,7 +142,7 @@ test/
 - **Deterministic**: One task, one run, one patch
 - **Container-first**: Designed for `docker run` with mounted volumes
 - **Provider-agnostic**: LLM backend via protocol interface
-- **Non-interactive**: All configuration via env vars and arguments
+- **Non-interactive**: All configuration via env vars
 - **Auditable**: Explicit task definitions, path allowlists, output contracts
 
 ## Security
