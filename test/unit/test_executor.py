@@ -37,6 +37,17 @@ class TestExecutor(unittest.TestCase):
     def test_executor_with_custom_llm_client(self):
         """Test executor with custom LLM client."""
         mock_client = Mock()
+        mock_client.complete.return_value = """---COMMIT_MSG---
+feat: test commit
+
+---PATCH---
+diff --git a/test.txt b/test.txt
+new file mode 100644
+--- /dev/null
++++ b/test.txt
+@@ -0,0 +1 @@
++test
+"""
         # Create a simple task file
         task_file = os.path.join(self.tasks_dir, "test_task.md")
         with open(task_file, "w") as f:
@@ -50,7 +61,7 @@ Test content.
 """)
         # Verify it can accept a custom LLM client
         commit_message, patch = Executor.execute_task(
-            self.repo_dir, self.context_dir, "test_task", llm_client=mock_client
+            self.repo_dir, "test_task", self.context_dir, llm_client=mock_client
         )
         # Verify mock was called
         mock_client.complete.assert_called_once()
@@ -70,7 +81,7 @@ guarantees:
 Test task content.
 """)
         
-        commit_message, patch = Executor.execute_task(self.repo_dir, self.context_dir, "test_task")
+        commit_message, patch = Executor.execute_task(self.repo_dir, "test_task", self.context_dir)
         
         self.assertIsInstance(commit_message, str)
         self.assertIsInstance(patch, str)
@@ -97,7 +108,7 @@ guarantees: []
 Test task content.
 """)
         
-        commit_message, patch = Executor.execute_task(self.repo_dir, self.context_dir, "test_task")
+        commit_message, patch = Executor.execute_task(self.repo_dir, "test_task", self.context_dir)
         
         self.assertIsInstance(commit_message, str)
         self.assertIsInstance(patch, str)
@@ -116,7 +127,7 @@ guarantees: []
 Task for {SERVICE} service.
 """)
         
-        commit_message, patch = Executor.execute_task(self.repo_dir, self.context_dir, "test_task", task_variables={"SERVICE": "api"})
+        commit_message, patch = Executor.execute_task(self.repo_dir, "test_task", self.context_dir, task_variables={"SERVICE": "api"})
         
         self.assertIsInstance(commit_message, str)
         self.assertIsInstance(patch, str)
@@ -170,6 +181,11 @@ Task for {SERVICE} service.
 
     def test_build_user_prompt_no_content(self):
         """Test user prompt building without content."""
+        # Create a file so repo structure is not empty
+        repo_file = os.path.join(self.repo_dir, "test.txt")
+        with open(repo_file, "w") as f:
+            f.write("Test")
+        
         task = {}
         variables = {}
         
@@ -196,7 +212,7 @@ Test content.
 """)
         
         with self.assertRaises(ValueError):
-            Executor.execute_task(self.repo_dir, self.context_dir, "test_task", llm_client=mock_client)
+            Executor.execute_task(self.repo_dir, "test_task", self.context_dir, llm_client=mock_client)
 
 
 if __name__ == "__main__":

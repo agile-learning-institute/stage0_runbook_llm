@@ -69,6 +69,84 @@ Task instructions go here.
         self.assertIn("specs/api_standards.md", context_files)
         self.assertIn("API Standards", context_files["specs/api_standards.md"])
 
+    def test_load_context_files_with_variables(self):
+        """Test loading context files with variable substitution."""
+        # Create test files
+        schemas_dir = os.path.join(self.temp_dir, ".schemas")
+        os.makedirs(schemas_dir)
+        test_file = os.path.join(schemas_dir, "User0.1.0.json")
+        with open(test_file, "w") as f:
+            f.write('{"type": "object"}')
+
+        variables = {"COLLECTION": "User", "VERSION": "0.1.0"}
+        context_files = TaskLoader.load_context_files(
+            self.temp_dir, 
+            ["/.schemas/{COLLECTION}{VERSION}.json"],
+            variables
+        )
+        self.assertIn("/.schemas/User0.1.0.json", context_files)
+        self.assertIn("object", context_files["/.schemas/User0.1.0.json"])
+
+    def test_load_context_files_missing_raises_error(self):
+        """Test that missing context files raise FileNotFoundError."""
+        with self.assertRaises(FileNotFoundError) as cm:
+            TaskLoader.load_context_files(self.temp_dir, ["nonexistent.md"])
+        self.assertIn("Required context files not found", str(cm.exception))
+        self.assertIn("nonexistent.md", str(cm.exception))
+
+    def test_load_context_files_none(self):
+        """Test that None context_paths raises ValueError with helpful message."""
+        with self.assertRaises(ValueError) as cm:
+            TaskLoader.load_context_files(self.temp_dir, None)
+        self.assertIn("context_paths cannot be None", str(cm.exception))
+        self.assertIn("context:", str(cm.exception))
+
+    def test_load_context_files_invalid_type(self):
+        """Test that non-list context_paths raises TypeError with helpful message."""
+        with self.assertRaises(TypeError) as cm:
+            TaskLoader.load_context_files(self.temp_dir, "not a list")
+        self.assertIn("must be a list", str(cm.exception))
+        self.assertIn("str", str(cm.exception))
+
+    def test_load_repo_files_with_variables(self):
+        """Test loading repo files with variable substitution."""
+        # Create test files
+        test_data_dir = os.path.join(self.temp_dir, "test_data")
+        os.makedirs(test_data_dir)
+        test_file = os.path.join(test_data_dir, "User0.1.0.json")
+        with open(test_file, "w") as f:
+            f.write('[{"id": 1}]')
+
+        variables = {"COLLECTION": "User", "VERSION": "0.1.0"}
+        repo_files = TaskLoader.load_repo_files(
+            self.temp_dir,
+            ["/test_data/{COLLECTION}{VERSION}.json"],
+            variables
+        )
+        self.assertIn("repo:/test_data/User0.1.0.json", repo_files)
+        self.assertIn('"id": 1', repo_files["repo:/test_data/User0.1.0.json"])
+
+    def test_load_repo_files_missing_raises_error(self):
+        """Test that missing repo files raise FileNotFoundError."""
+        with self.assertRaises(FileNotFoundError) as cm:
+            TaskLoader.load_repo_files(self.temp_dir, ["nonexistent.py"])
+        self.assertIn("Required repository files not found", str(cm.exception))
+        self.assertIn("nonexistent.py", str(cm.exception))
+
+    def test_load_repo_files_none(self):
+        """Test that None repo_paths raises ValueError with helpful message."""
+        with self.assertRaises(ValueError) as cm:
+            TaskLoader.load_repo_files(self.temp_dir, None)
+        self.assertIn("repo_paths cannot be None", str(cm.exception))
+        self.assertIn("repo:", str(cm.exception))
+
+    def test_load_repo_files_invalid_type(self):
+        """Test that non-list repo_paths raises TypeError with helpful message."""
+        with self.assertRaises(TypeError) as cm:
+            TaskLoader.load_repo_files(self.temp_dir, {"not": "a list"})
+        self.assertIn("must be a list", str(cm.exception))
+        self.assertIn("dict", str(cm.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
