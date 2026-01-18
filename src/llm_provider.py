@@ -124,7 +124,14 @@ class OpenAIClient:
 
 def create_llm_client() -> LLMClient:
     """Factory function to create an LLM client based on configuration."""
-    from .config import Config
+    try:
+        from .config import Config
+    except ImportError:
+        # Handle direct import (for testing)
+        import sys
+        import os
+        sys.path.insert(0, os.path.dirname(__file__))
+        from config import Config
     config = Config()
     
     provider = config.LLM_PROVIDER.lower()

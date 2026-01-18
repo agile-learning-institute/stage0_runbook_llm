@@ -12,35 +12,39 @@ The executor is a pure function: reads inputs, executes one task, writes patch o
 
 ## Usage
 
-### Local Development
-
-#### Developer Commands
+### Developer Commands
 
 ```bash
-# Quick Start
+# Quick Start - run the simple_readme task 
+# Using the test/repo and test/context folders
+# And LLM Services hosed on the Dev Spark
 pipenv install
 export TASK_NAME=simple_readme
-pipenv run onspark
+pipenv run spark
 
-# Full Configuration
-pipenv install
+# Run a task with full control
 export TASK_NAME=example
 export LLM_PROVIDER=ollama
 export LLM_MODEL=codellama
 export LLM_BASE_URL=http://localhost:11434
 export REPO_ROOT=/path/to/repo
-export CONTEXT_ROOT=/path/to/context  # Optional: only needed if tasks use context files
+export CONTEXT_ROOT=/path/to/context  # Optional
 
+# Execute a Task as configured in the environment
 pipenv run task
-```
 
-**Available Commands:**
-- `pipenv run onspark` - Quick start with test/repo, test/context, and Ollama pre-configured (requires TASK_NAME)
-- `pipenv run task` - Run with full environment variable configuration
-- `pipenv run test` - Run unit tests
-- `pipenv run e2e` - Run end-to-end tests
-- `pipenv run container` - Build Docker image
-- `pipenv run deploy` - Test container locally
+# Run unit tests
+pipenv run test
+
+# Run end to end tests
+pipenv run e2e
+
+# Build the Docker Container
+pipenv run container
+
+# Run the configured script in the container
+pipenv run deploy
+```
 
 ### Output Format
 

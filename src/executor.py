@@ -76,7 +76,14 @@ class Executor:
         user_prompt = Executor._build_user_prompt(repo_root, task, task_variables)
 
         # Execute LLM call
-        from .config import Config
+        try:
+            from .config import Config
+        except ImportError:
+            # Handle direct import (for testing)
+            import sys
+            import os
+            sys.path.insert(0, os.path.dirname(__file__))
+            from config import Config
         config = Config()
         
         logger.info("Executing LLM task...")
