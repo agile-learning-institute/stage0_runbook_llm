@@ -8,7 +8,7 @@ Container-friendly CLI that executes LLM-powered code transformations against a 
 Caller → [Mounts repo + context] → Executor → [stdout: patch + message] → Caller
 ```
 
-The executor is a pure function: reads inputs, executes one task, writes patch output, exits. Git operations are handled by the caller.
+The executor is a pure function: reads inputs, executes one task, writes patch output, exits. Git operations (clone, pull, checkout, patch, etc.) handled by the caller.
 
 ## Usage
 
@@ -22,7 +22,6 @@ docker run --rm \
   -e LLM_PROVIDER=ollama \
   -e LLM_MODEL=codellama \
   -e LLM_BASE_URL=http://localhost:11434 \
-  -e TRACKING_BREADCRUMB="user:admin,role:ci,ts:2024-01-01T00:00:00Z,corr:abc123" \
   ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest
 ```
 
@@ -37,7 +36,6 @@ export LLM_BASE_URL=http://localhost:11434
 export REPO_ROOT=/path/to/repo
 # CONTEXT_ROOT is optional - only needed if tasks use context files
 export CONTEXT_ROOT=/path/to/context
-export TRACKING_BREADCRUMB="user:dev,role:dev,ts:$(date -u +%Y-%m-%dT%H:%M:%SZ),corr:test"
 
 pipenv run task
 ```

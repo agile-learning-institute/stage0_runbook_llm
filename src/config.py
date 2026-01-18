@@ -53,7 +53,6 @@ class Config:
         self.CONTEXT_ROOT = ''
         self.TASK_NAME = ''
         self.LOG_LEVEL = ''
-        self.TRACKING_BREADCRUMB = ''
         self.LLM_PROVIDER = ''
         self.LLM_MODEL = ''
         self.LLM_BASE_URL = ''
@@ -67,7 +66,6 @@ class Config:
             "CONTEXT_ROOT": "/workspace/context",
             "TASK_NAME": "",
             "LOG_LEVEL": "INFO",
-            "TRACKING_BREADCRUMB": "",
             "LLM_PROVIDER": "null",  # null, ollama, openai, azure
             "LLM_MODEL": "codellama",
             "LLM_BASE_URL": "http://localhost:11434",
