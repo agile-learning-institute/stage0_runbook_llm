@@ -1,18 +1,17 @@
 #!/bin/bash
 # E2E test script for containerized CLI execution
-# This script builds the container (if needed) and runs E2E tests against it
+# This script validates that the containerized CLI works correctly
 
 set -e
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-TEST_DIR="${SCRIPT_DIR}/.."
 
-# Container image name
-IMAGE_NAME="ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest"
+# Container image name (must match Makefile)
+IMAGE_NAME="ghcr.io/agile-learning-institute/stage0_runbook_llm:latest"
 
-# Test directories (relative to project root)
+# Test directories
 REPO_DIR="${PROJECT_ROOT}/test/repo"
 CONTEXT_DIR="${PROJECT_ROOT}/test/context"
 
@@ -20,27 +19,22 @@ CONTEXT_DIR="${PROJECT_ROOT}/test/context"
 mkdir -p "${REPO_DIR}"
 mkdir -p "${CONTEXT_DIR}"
 
-echo "Building container image..."
-cd "${PROJECT_ROOT}"
-docker build --tag "${IMAGE_NAME}" . || {
-    echo "Error: Failed to build container image"
-    exit 1
-}
-
-echo ""
 echo "Running E2E test in container..."
 echo ""
 
 # Run container with test environment variables
-# Mount test/repo and test/context as volumes
-# Set environment variables for null provider test
+# Using default E2E test values (null provider, simple_readme task)
 docker run --rm \
     -v "${REPO_DIR}:/workspace/repo" \
     -v "${CONTEXT_DIR}:/workspace/context" \
-    -e "LLM_PROVIDER=null" \
-    -e "TASK_NAME=simple_readme" \
     -e "REPO_ROOT=/workspace/repo" \
     -e "CONTEXT_ROOT=/workspace/context" \
+    -e "TASK_NAME=simple_readme" \
+    -e "LLM_PROVIDER=null" \
+    -e "LLM_MODEL=codellama" \
+    -e "LLM_BASE_URL=http://localhost:11434" \
+    -e "LLM_TEMPERATURE=7" \
+    -e "LLM_MAX_TOKENS=8192" \
     -e "LOG_LEVEL=INFO" \
     "${IMAGE_NAME}" > /tmp/container_e2e_output.txt 2>&1
 
@@ -55,12 +49,13 @@ echo "${OUTPUT}"
 echo "=================="
 echo ""
 
+# Validate exit code
 if [ ${CONTAINER_EXIT_CODE} -ne 0 ]; then
     echo "Error: Container exited with code ${CONTAINER_EXIT_CODE}"
     exit 1
 fi
 
-# Validate output
+# Validate output markers
 if ! echo "${OUTPUT}" | grep -q -- "---COMMIT_MSG---"; then
     echo "Error: Output missing ---COMMIT_MSG--- marker"
     exit 1
