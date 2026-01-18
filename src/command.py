@@ -19,16 +19,18 @@ def main():
         logger.error(f"Repository root does not exist: {config.REPO_ROOT}")
         sys.exit(1)
 
-    if not os.path.exists(config.CONTEXT_ROOT):
-        logger.error(f"Context root does not exist: {config.CONTEXT_ROOT}")
+    # Context root is optional - only validate if set
+    context_root = config.CONTEXT_ROOT if config.CONTEXT_ROOT else None
+    if context_root and not os.path.exists(context_root):
+        logger.error(f"Context root does not exist: {context_root}")
         sys.exit(1)
 
     try:
-        # Execute task
+        # Execute task (context_root is optional)
         commit_message, patch = Executor.execute_task(
             config.REPO_ROOT,
-            config.CONTEXT_ROOT,
-            config.TASK_NAME
+            config.TASK_NAME,
+            context_root=context_root
         )
 
         # Output to stdout in the required format

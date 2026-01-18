@@ -17,17 +17,26 @@ class Executor:
     @staticmethod
     def execute_task(
         repo_root: str,
-        context_root: str,
         task_name: str,
+        context_root: str = None,
         task_variables: Dict[str, str] = None,
         llm_client: LLMClient = None
     ) -> tuple[str, str]:
-        """Execute a task and return (commit_message, patch)."""
+        """
+        Execute a task and return (commit_message, patch).
+        
+        Args:
+            repo_root: Repository root path (required)
+            task_name: Name of the task to execute
+            context_root: Context root path (optional, only needed if task uses context files)
+            task_variables: Optional explicit variables (merged with environment variables)
+            llm_client: Optional LLM client (uses Config defaults if not provided)
+        """
         task_variables = task_variables or {}
         llm_client = llm_client or create_llm_client()
         
-        # Load task definition
-        task = TaskLoader.load_task(context_root, task_name)
+        # Load task definition (searches repo/tasks first, then context/tasks)
+        task = TaskLoader.load_task(repo_root, task_name, context_root)
         logger.info(f"Loaded task: {task_name}")
 
         # Validate and load required environment variables
@@ -44,6 +53,11 @@ class Executor:
         # Load context and repo files
         context_files = {}
         if "context" in task:
+            if not context_root:
+                raise ValueError(
+                    f"Task requires context files but CONTEXT_ROOT is not set. "
+                    f"Task specifies context paths: {task['context']}"
+                )
             context_files.update(TaskLoader.load_context_files(context_root, task["context"]))
             logger.info(f"Loaded {len(task['context'])} context file paths")
         

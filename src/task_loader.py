@@ -12,13 +12,46 @@ class TaskLoader:
     """Loads and validates task definitions from context."""
 
     @staticmethod
-    def load_task(context_root: str, task_name: str) -> Dict[str, Any]:
-        """Load a task definition from the tasks directory."""
-        tasks_dir = os.path.join(context_root, "tasks")
-        task_file = os.path.join(tasks_dir, f"{task_name}.md")
+    def load_task(repo_root: str, task_name: str, context_root: str = None) -> Dict[str, Any]:
+        """
+        Load a task definition, searching first in repo/tasks, then context/tasks.
         
-        if not os.path.exists(task_file):
-            raise FileNotFoundError(f"Task not found: {task_file}")
+        Args:
+            repo_root: Repository root path (required)
+            task_name: Name of the task (without .md extension)
+            context_root: Context root path (optional, only used if task not found in repo)
+            
+        Returns:
+            Task definition dictionary
+            
+        Raises:
+            FileNotFoundError: If task is not found in either location
+        """
+        # Try repo/tasks first
+        repo_tasks_dir = os.path.join(repo_root, "tasks")
+        repo_task_file = os.path.join(repo_tasks_dir, f"{task_name}.md")
+        
+        task_file = None
+        if os.path.exists(repo_task_file):
+            task_file = repo_task_file
+            logger.debug(f"Found task in repo: {repo_task_file}")
+        
+        # Fallback to context/tasks if not found in repo
+        if not task_file and context_root:
+            context_tasks_dir = os.path.join(context_root, "tasks")
+            context_task_file = os.path.join(context_tasks_dir, f"{task_name}.md")
+            if os.path.exists(context_task_file):
+                task_file = context_task_file
+                logger.debug(f"Found task in context: {context_task_file}")
+        
+        if not task_file:
+            locations = [repo_task_file]
+            if context_root:
+                locations.append(os.path.join(context_root, "tasks", f"{task_name}.md"))
+            raise FileNotFoundError(
+                f"Task '{task_name}' not found in repo/tasks or context/tasks. "
+                f"Searched: {', '.join(locations)}"
+            )
 
         with open(task_file, "r") as f:
             content = f.read()
@@ -41,7 +74,19 @@ class TaskLoader:
 
     @staticmethod
     def load_context_files(context_root: str, context_paths: List[str]) -> Dict[str, str]:
-        """Load context files from the context root."""
+        """
+        Load context files from the context root.
+        
+        Args:
+            context_root: Context root path (must exist)
+            context_paths: List of paths relative to context_root
+            
+        Returns:
+            Dictionary of path -> file content
+        """
+        if not context_root or not os.path.exists(context_root):
+            raise ValueError(f"Context root does not exist: {context_root}")
+            
         context_files = {}
         
         for path_spec in context_paths:
