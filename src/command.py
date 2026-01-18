@@ -3,8 +3,13 @@ import os
 import sys
 import logging
 
-from .config import Config
-from .executor import Executor
+try:
+    from .config import Config
+    from .executor import Executor
+except ImportError:
+    # Handle direct import (when PYTHONPATH=./src and running as module)
+    from config import Config
+    from executor import Executor
 
 logger = logging.getLogger(__name__)
 

@@ -3,10 +3,17 @@ import os
 import logging
 from typing import Dict, Any
 
-from .llm_provider import LLMClient, create_llm_client
-from .task_loader import TaskLoader
-from .repo_reader import RepoReader
-from .patch_generator import parse_patch_response
+try:
+    from .llm_provider import LLMClient, create_llm_client
+    from .task_loader import TaskLoader
+    from .repo_reader import RepoReader
+    from .patch_generator import parse_patch_response
+except ImportError:
+    # Handle direct import (when PYTHONPATH=./src and running as module)
+    from llm_provider import LLMClient, create_llm_client
+    from task_loader import TaskLoader
+    from repo_reader import RepoReader
+    from patch_generator import parse_patch_response
 
 logger = logging.getLogger(__name__)
 
@@ -79,10 +86,7 @@ class Executor:
         try:
             from .config import Config
         except ImportError:
-            # Handle direct import (for testing)
-            import sys
-            import os
-            sys.path.insert(0, os.path.dirname(__file__))
+            # Handle direct import (when PYTHONPATH=./src and running as module)
             from config import Config
         config = Config()
         

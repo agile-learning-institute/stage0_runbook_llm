@@ -8,9 +8,10 @@ spark = "sh -c 'export REPO_ROOT=$(pwd)/test/repo CONTEXT_ROOT=$(pwd)/test/conte
 test = "sh -c 'PYTHONPATH=./src python -m unittest discover -s test -p '*_test.py' -v'"
 task = "sh -c 'PYTHONPATH=./src python -m command'"
 e2e = "sh -c 'PYTHONPATH=./src python -m unittest discover -s test/e2e -p '*.py' -v'"
+e2e-container = "sh -c '$(pwd)/test/e2e/run_container_e2e.sh'"
 container = "docker build --tag ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest ."
 deploy = "sh -c 'docker run --rm -v $(pwd)/test/repo:/workspace/repo -v $(pwd)/test/context:/workspace/context ghcr.io/agile-learning-institute/stage0_runbook_ai_cli:latest'"
-help = "sh -c 'echo \"Available commands: spark, test, task, e2e, container, deploy\"'"
+help = "sh -c 'echo \"Available commands: spark, test, task, e2e, e2e-container, container, deploy\"'"
 
 [packages]
 pyyaml = "*"

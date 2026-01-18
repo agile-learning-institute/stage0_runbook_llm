@@ -36,13 +36,16 @@ pipenv run task
 # Run unit tests
 pipenv run test
 
-# Run end to end tests
+# Run end-to-end tests
 pipenv run e2e
 
 # Build the Docker Container
 pipenv run container
 
-# Run the configured script in the container
+# Run E2E tests using the Docker Container
+pipenv run container
+
+# Run the configured script using the container
 pipenv run deploy
 ```
 

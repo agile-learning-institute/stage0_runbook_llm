@@ -2,16 +2,8 @@
 import unittest
 import os
 import sys
-import tempfile
-import shutil
+import subprocess
 from pathlib import Path
-
-# Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
-
-from executor import Executor
-from patch_generator import parse_patch_response
-from difflib import SequenceMatcher
 
 
 class TestE2E(unittest.TestCase):
@@ -23,61 +15,67 @@ class TestE2E(unittest.TestCase):
         test_dir = Path(__file__).parent.parent
         self.repo_root = str(test_dir / "repo")
         self.context_root = str(test_dir / "context")
+        self.project_root = Path(__file__).parent.parent.parent
         
         # Ensure directories exist
         os.makedirs(self.repo_root, exist_ok=True)
         
-    def test_simple_readme_task(self):
-        """Test creating a README.md from standards and info."""
-        # Set up config for Ollama
-        os.environ["LLM_PROVIDER"] = "ollama"
-        os.environ["LLM_MODEL"] = "llama3.2"  # Smaller model
-        os.environ["LLM_BASE_URL"] = "http://spark-478a.tailb0d293.ts.net:11434"
-        os.environ["REPO_ROOT"] = self.repo_root
-        os.environ["CONTEXT_ROOT"] = self.context_root
-        os.environ["LOG_LEVEL"] = "INFO"
+    def test_simple_readme_task_null_provider(self):
+        """Test creating a README.md using null LLM provider (CLI execution)."""
+        # Set up environment for null provider
+        env = os.environ.copy()
+        env["LLM_PROVIDER"] = "null"
+        env["TASK_NAME"] = "simple_readme"
+        env["REPO_ROOT"] = self.repo_root
+        env["CONTEXT_ROOT"] = self.context_root
+        env["LOG_LEVEL"] = "INFO"
         
         try:
-            commit_message, patch = Executor.execute_task(self.repo_root, "simple_readme", context_root=self.context_root)
+            # Execute CLI command via subprocess - call Python with command module import
+            # PYTHONPATH=./src python -c "import command; command.main()"
+            python_cmd = "import sys; sys.path.insert(0, './src'); import command; command.main()"
             
-            # Verify output format - commit_message and patch are already parsed
-            self.assertIn("README.md", patch)
+            result = subprocess.run(
+                [sys.executable, "-c", python_cmd],
+                cwd=str(self.project_root),
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
             
-            # Verify commit message is present
-            self.assertTrue(len(commit_message) > 0)
+            # Verify command succeeded
+            self.assertEqual(result.returncode, 0, 
+                f"CLI failed with return code {result.returncode}. stderr: {result.stderr}\nstdout: {result.stdout}")
             
-            # Verify patch contains expected content
-            self.assertIn("diff --git", patch)
-            self.assertIn("My Awesome Project", patch, "Should contain project name from Info.md")
+            # Parse output
+            output = result.stdout
+            self.assertIn("---COMMIT_MSG---", output, "Output should contain commit message marker")
+            self.assertIn("---PATCH---", output, "Output should contain patch marker")
             
-            # Load expected content if available
-            expected_file = Path(__file__).parent.parent / "expected" / "simple_readme_expected.md"
-            if expected_file.exists():
-                with open(expected_file, "r") as f:
-                    expected_content = f.read()
-                
-                # Extract README content from patch (fuzzy match)
-                # The patch should contain the README content
-                # We'll do a fuzzy match on key phrases
-                expected_phrases = [
-                    "My Awesome Project",
-                    "Description",
-                    "Installation",
-                    "Usage",
-                ]
-                
-                found_phrases = sum(1 for phrase in expected_phrases if phrase in patch)
-                self.assertGreater(
-                    found_phrases,
-                    len(expected_phrases) * 0.5,  # At least 50% of expected phrases
-                    f"Patch should contain key phrases from expected output. Found {found_phrases}/{len(expected_phrases)}"
-                )
-                
+            # Extract commit message and patch
+            parts = output.split("---COMMIT_MSG---")
+            self.assertEqual(len(parts), 2, "Should have exactly one COMMIT_MSG block")
+            commit_patch = parts[1].split("---PATCH---")
+            self.assertEqual(len(commit_patch), 2, "Should have exactly one PATCH block")
+            
+            commit_message = commit_patch[0].strip()
+            patch = commit_patch[1].strip()
+            
+            # Verify commit message is present and matches null provider output
+            self.assertGreater(len(commit_message), 0, "Commit message should not be empty")
+            # Null provider returns "feat: mock change"
+            self.assertIn("mock change", commit_message.lower(), "Should match null provider commit message")
+            
+            # Verify patch contains expected null provider output
+            # Null provider returns patch for test.txt with "mock content"
+            self.assertIn("diff --git", patch, "Patch should contain git diff header")
+            self.assertIn("test.txt", patch, "Null provider patch should reference test.txt")
+            self.assertIn("mock content", patch, "Null provider patch should contain mock content")
+            
         finally:
-            # Clean up environment
-            for key in ["LLM_PROVIDER", "LLM_MODEL", "LLM_BASE_URL", "REPO_ROOT", "CONTEXT_ROOT", "LOG_LEVEL"]:
-                if key in os.environ:
-                    del os.environ[key]
+            # Environment cleanup is handled by env dict copy
+            pass
 
 
 if __name__ == "__main__":
